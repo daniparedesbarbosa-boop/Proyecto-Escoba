@@ -50,4 +50,50 @@ public class Partida {
     private void siguienteTurno() {
         turnoActual = (turnoActual + 1) % jugadores.size();
     }
+
+    public void jugarPartida() {
+        while (!finPartida()) {
+            if (jugadoresSinCartas() && baraja.cartasRestantes() > 0) {
+                repartirCartas();
+            }
+
+            mostrarEstado();
+
+            jugarTurno(0);
+        }
+
+        System.out.println("Siguiente partida");
+    }
+
+    public boolean finPartida() {
+        if (baraja.cartasRestantes() > 0) {
+            return false;
+        }
+
+        for (Jugador j :  jugadores) {
+            if (!j.getMano().isEmpty()){
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public boolean jugadoresSinCartas() {
+        for (Jugador j :  jugadores) {
+            if (!j.getMano().isEmpty()){
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public void repartirCartas() {
+        for (Jugador j :  jugadores) {
+            for (int i = 0; i < 3; i++) {
+                j.recibirCarta(baraja.repartirCarta());
+            }
+        }
+    }
 }
