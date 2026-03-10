@@ -37,6 +37,16 @@ public class MontonJugador {
         } return count;
     }
 
+    public int getSietes() {
+        int contador = 0;
+        for (Carta c : cartas) {
+            if (c.getNumero() == 7) {
+                contador++;
+            }
+        }
+        return contador;
+    }
+
     public boolean getVelo() {
         for (Carta c : cartas) {
             if (c.getNumero() == 7 && c.getPalo() == Carta.OROS) {
