@@ -217,4 +217,24 @@ public class Partida {
             }
         }
     }
+
+    public Baraja getBaraja() {
+        return baraja;
+    }
+
+    public void distribuirCartasIniciales() {
+        repartirCartas();
+
+        for (int i = 0; i < 4; i++) {
+            Carta carta = baraja.repartirCarta();
+            if (carta != null) {
+                mesa.añadirCarta(carta);
+            }
+        }
+    }
+
+    public Mesa getMesa() {
+        return mesa;
+    }
+
 }
