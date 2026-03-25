@@ -14,6 +14,7 @@ public class Baraja {
     }
 
     private void inicializarBaraja() {
+        ArrayList<Carta> baraja = new ArrayList<>();
         char[] palos = {
                 Carta.OROS,
                 Carta.COPAS,

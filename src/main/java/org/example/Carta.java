@@ -38,6 +38,15 @@ public class Carta {
         }
     }
 
+    private String displayNumero() {
+        switch (numero) {
+            case 8: return "SOTA";
+            case 9: return "CABALLO";
+            case 10: return "REY";
+            default: return String.valueOf(numero);
+        }
+    }
+
     @Override
     public String toString() {
         return numero + " " + emojiPalo();

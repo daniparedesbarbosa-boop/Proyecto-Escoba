@@ -52,7 +52,7 @@ public class Main {
         System.out.println("╚════════════════════════════════════════╝");
         System.out.println();
         System.out.println("Jugador: " + nombre);
-        System.out.println("Rivales: " + numCPUs + " CPU" + (numCPUs > 1 ? "s" : ""));
+        System.out.println("Rivales: " + nombresIA.toString());
         System.out.println();
 
         Partida partida = new Partida(nombresJugadores);
@@ -68,10 +68,12 @@ public class Main {
             }
         }
 
-        System.out.println("¡Que comience el juego!");
-        System.out.println();
-
-        partida.jugarPartida();
+        System.out.println("¿Comenzamos?");
+        System.out.println("S/N");
+        String respuesta = scanner.next().trim();
+        if (respuesta.equalsIgnoreCase("S")) {
+            partida.jugarPartida();
+        }
 
         System.out.println();
         System.out.println("╔═══════════════════════════════════════╗");
