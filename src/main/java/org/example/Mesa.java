@@ -28,14 +28,14 @@ public class Mesa {
 
     public void mostrarMesa() {
         System.out.println("Cartas en la mesa:");
-        for (int i = 0; i < cartasEnMesa.size(); i++) {
+        for (int i = 1; i < cartasEnMesa.size() + 1; i++) {
             System.out.println(i + " - " + cartasEnMesa.get(i));
         }
     }
 
     public List<List<Carta>> buscarCombinaciones(Carta cartaJugada) {
         List<List<Carta>> resultado = new ArrayList<>();
-        int objetivo = 15 -cartaJugada.getValor();
+        int objetivo = 15 - cartaJugada.getValor();
 
         buscarRecursivo(resultado, new ArrayList<>(), 0, objetivo);
 

@@ -49,6 +49,7 @@ public class Carta {
 
     @Override
     public String toString() {
-        return numero + " " + emojiPalo();
+        String nombreCarta = displayNumero();
+        return nombreCarta + " " + emojiPalo();
     }
 }

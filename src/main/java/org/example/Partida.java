@@ -104,13 +104,6 @@ public class Partida {
         Jugador jugador = jugadorActual();
 
         System.out.println("\nTurno de: " + jugador.getNombre());
-        System.out.println("Tu mano: ");
-
-        List<Carta> mano = jugador.getMano();
-
-        for (int i = 0; i < mano.size(); i++) {
-            System.out.println(i + " - " + mano.get(i));
-        }
 
         System.out.println("======================");
     }

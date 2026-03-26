@@ -61,7 +61,7 @@ public class Main {
 
         partida.repartirCartas();
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 1; i < 5; i++) {
             Carta carta = partida.getBaraja().repartirCarta();
             if (carta != null) {
                 partida.getMesa().añadirCarta(carta);
