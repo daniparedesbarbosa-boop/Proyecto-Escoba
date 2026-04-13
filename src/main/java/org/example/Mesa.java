@@ -28,8 +28,17 @@ public class Mesa {
 
     public void mostrarMesa() {
         System.out.println("Cartas en la mesa:");
-        for (int i = 1; i < cartasEnMesa.size() + 1; i++) {
-            System.out.println(i + " - " + cartasEnMesa.get(i));
+        if (cartasEnMesa.isEmpty()) {
+            System.out.println("(vacía)");
+        } else {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < cartasEnMesa.size(); i++) {
+                sb.append(cartasEnMesa.get(i));
+                if (i < cartasEnMesa.size() - 1) {
+                    sb.append(" | ");
+                }
+            }
+            System.out.println(sb.toString());
         }
     }
 
@@ -57,7 +66,7 @@ public class Mesa {
 
             actual.add(carta);
 
-            buscarRecursivo(resultado, actual, indice + 1, restante - carta.getValor());
+            buscarRecursivo(resultado, actual, i + 1, restante - carta.getValor());
 
             actual.remove(actual.size() - 1);
         }

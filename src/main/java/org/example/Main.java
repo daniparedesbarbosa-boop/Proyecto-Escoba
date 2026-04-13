@@ -47,12 +47,17 @@ public class Main {
         }
 
         System.out.println();
-        System.out.println("╔════════════════════════════════════════╗");
-        System.out.println("║        PREPARANDO LA PARTIDA           ║");
-        System.out.println("╚════════════════════════════════════════╝");
+        System.out.println("╔═══════════════════════════════════════╗");
+        System.out.println("║              LA PARTIDA               ║");
+        System.out.println("╚═══════════════════════════════════════╝");
         System.out.println();
         System.out.println("Jugador: " + nombre);
-        System.out.println("Rivales: " + nombresIA.toString());
+        System.out.print("Rivales: ");
+        for (int i = 0; i < numCPUs; i++) {
+            System.out.print(nombresIA[i]);
+            if (i < numCPUs - 1) System.out.print(", ");
+        }
+        System.out.println();
         System.out.println();
 
         Partida partida = new Partida(nombresJugadores);
@@ -61,18 +66,20 @@ public class Main {
 
         partida.repartirCartas();
 
-        for (int i = 1; i < 5; i++) {
+        for (int i = 0; i < 4; i++) {
             Carta carta = partida.getBaraja().repartirCarta();
             if (carta != null) {
                 partida.getMesa().añadirCarta(carta);
             }
         }
 
-        System.out.println("¿Comenzamos?");
-        System.out.println("S/N");
+        System.out.println("¿Comenzamos? (S/N)");
         String respuesta = scanner.next().trim();
         if (respuesta.equalsIgnoreCase("S")) {
             partida.jugarPartida();
+        } else {
+            System.out.println("¡Hasta luego!");
+            return;
         }
 
         System.out.println();

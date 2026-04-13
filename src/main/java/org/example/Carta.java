@@ -31,7 +31,7 @@ public class Carta {
     private String emojiPalo() {
         switch (palo) {
             case OROS: return "\uD83E\uDE99"; // 🪙
-            case COPAS: return "\uD83C\uDFC6"; // 🏆
+            case COPAS: return "\uD83C\uDF77"; // 🍷
             case ESPADAS: return "\u2694\uFE0F"; // ⚔️
             case BASTOS: return "\uD83E\uDEB5"; // 🪵
             default: return "?";

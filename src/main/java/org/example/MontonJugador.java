@@ -6,6 +6,8 @@ import java.util.List;
 public class MontonJugador {
     private List<Carta> cartas;
     private int escobas;
+    private int cartasCapturadas = 0;
+    private int orosCapturados = 0;
 
     public MontonJugador() {
         cartas = new ArrayList<>();
@@ -14,6 +16,12 @@ public class MontonJugador {
 
     public void agregarCartas(List<Carta> nuevas) {
         cartas.addAll(nuevas);
+        cartasCapturadas += nuevas.size();
+        for (Carta c : nuevas) {
+            if (c.getPalo() == Carta.OROS) {
+                orosCapturados++;
+            }
+        }
     }
 
     public void sumarEscoba() {
@@ -53,5 +61,13 @@ public class MontonJugador {
                 return true;
             }
         } return false;
+    }
+
+    public int getCartasCapturadas() {
+        return cartasCapturadas;
+    }
+
+    public int getOrosCapturados() {
+        return orosCapturados;
     }
 }
