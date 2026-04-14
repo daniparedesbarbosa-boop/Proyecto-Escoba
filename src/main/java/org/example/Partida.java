@@ -11,6 +11,7 @@ public class Partida {
     private int turnoActual;
     private Scanner scanner = new Scanner(System.in);
     private Jugador ultimoQueCapturo = null;
+    private boolean ultimasCartasMostrado = false;
 
     public Partida(List<String> nombresJugadores) {
         baraja = new Baraja();
@@ -133,6 +134,12 @@ public class Partida {
         mesa.mostrarMesa();
         System.out.println("================================");
 
+        // Mostrar aviso si es la última ronda (solo una vez cuando la baraja está vacía)
+        if (baraja.cartasRestantes() == 0 && !ultimasCartasMostrado) {
+            System.out.println("\n¡ÚLTIMAS!");
+            ultimasCartasMostrado = true;
+        }
+
         Jugador jugador = jugadorActual();
         System.out.println("\nTurno de: " + jugador.getNombre());
     }
@@ -158,7 +165,13 @@ public class Partida {
             }
 
             System.out.print("Elige una carta (1-" + mano.size() + "): ");
-            opcion = scanner.nextInt();
+            try {
+                opcion = scanner.nextInt();
+            } catch (Exception e) {
+                System.out.println("Introduce un número válido");
+                scanner.nextLine(); // Limpiar el buffer
+                opcion = 0; // Valor inválido para continuar el bucle
+            }
         } while (opcion < 1 || opcion > mano.size());
 
         return opcion - 1; // Convertir a índice (0-based)
@@ -233,10 +246,10 @@ public class Partida {
 
         // Imprimir tabla
         System.out.println("\nPuntos:");
-        String formato = "| %-12s | %-6s | %-6s | %-6s | %-7s | %-4s |";
-        String separador = "+--------------+--------+--------+--------+---------+------+";
+        String formato = "| %-12s | %-6s | %-6s | %-6s | %-4s | %-7s |";
+        String separador = "+--------------+--------+--------+--------+------+---------+";
         System.out.println(separador);
-        System.out.printf(formato, "Jugador", "Cartas", "Oros", "Sietes", "Escobas", "Velo");
+        System.out.printf(formato, "Jugador", "Cartas", "Oros", "Sietes", "Velo", "Escobas");
         System.out.println();
         System.out.println(separador);
         for (Jugador j : jugadores) {
@@ -252,9 +265,10 @@ public class Partida {
             if (!empateCartas && ganadoresCartas.contains(j)) cartas += " *";
             if (!empateOros && ganadoresOros.contains(j)) oros += " *";
             if (!empateSietes && ganadoresSietes.contains(j)) sietes += " *";
-            if (ganadoresEscobas.contains(j)) escobas += " *";
+            // No marcar * para escobas
+            if (m.getVelo()) velo += " *";
 
-            System.out.printf(formato, nombre, cartas, oros, sietes, escobas, velo);
+            System.out.printf(formato, nombre, cartas, oros, sietes, velo, escobas);
             System.out.println();
         }
         System.out.println(separador);

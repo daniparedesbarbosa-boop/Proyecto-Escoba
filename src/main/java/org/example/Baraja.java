@@ -44,9 +44,4 @@ public class Baraja {
         return mazo.size();
     }
 
-    public void mostrarBaraja() {
-        for (Carta c : mazo) {
-            System.out.println(c);
-        }
-    }
 }

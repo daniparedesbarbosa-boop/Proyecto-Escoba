@@ -28,7 +28,7 @@ public class Main {
                 scanner.nextLine();
 
                 if (numCPUs < 1 || numCPUs > 3) {
-                    System.out.println("Introduce una número entre 1 y 3");
+                    System.out.println("Introduce un número entre 1 y 3");
                     numCPUs = 0;
                 }
             } catch (Exception e) {
