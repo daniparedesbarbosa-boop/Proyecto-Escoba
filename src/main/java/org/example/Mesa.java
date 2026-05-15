@@ -3,6 +3,9 @@ package org.example;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Mesa: Modelo - Representa el estado de las cartas en la mesa
+ */
 public class Mesa {
     private List<Carta> cartasEnMesa;
 
@@ -24,22 +27,6 @@ public class Mesa {
 
     public boolean mesaVacia() {
         return cartasEnMesa.isEmpty();
-    }
-
-    public void mostrarMesa() {
-        System.out.println("Cartas en la mesa:");
-        if (cartasEnMesa.isEmpty()) {
-            System.out.println("(vacía)");
-        } else {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < cartasEnMesa.size(); i++) {
-                sb.append(cartasEnMesa.get(i));
-                if (i < cartasEnMesa.size() - 1) {
-                    sb.append(" | ");
-                }
-            }
-            System.out.println(sb.toString());
-        }
     }
 
     public List<List<Carta>> buscarCombinaciones(Carta cartaJugada) {
@@ -72,3 +59,5 @@ public class Mesa {
         }
     }
 }
+
+
