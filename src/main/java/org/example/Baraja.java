@@ -17,18 +17,16 @@ public class Baraja {
     }
 
     private void inicializarBaraja() {
-        ArrayList<Carta> baraja = new ArrayList<>();
-        char[] palos = {
-                Carta.OROS,
-                Carta.COPAS,
-                Carta.ESPADAS,
-                Carta.BASTOS
-        };
+        char[] palos = { Carta.OROS, Carta.COPAS, Carta.ESPADAS, Carta.BASTOS };
 
         for (char palo : palos) {
-            for (int numero = 1; numero <= 10; numero++) {
-                mazo.add(new Carta(numero, palo, numero));
-            }
+            crearCartasDelPalo(palo);
+        }
+    }
+
+    private void crearCartasDelPalo(char palo) {
+        for (int numero = 1; numero <= 10; numero++) {
+            mazo.add(new Carta(numero, palo, numero));
         }
     }
 

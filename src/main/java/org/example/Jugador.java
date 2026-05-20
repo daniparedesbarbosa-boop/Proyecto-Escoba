@@ -35,4 +35,12 @@ public class Jugador {
     public Carta jugarCarta(int indice) {
         return mano.remove(indice);
     }
+
+    public boolean tieneCartas() {
+        return !mano.isEmpty();
+    }
+
+    public int getCantidadCartasEnMano() {
+        return mano.size();
+    }
 }

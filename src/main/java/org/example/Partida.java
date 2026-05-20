@@ -1,11 +1,10 @@
 package org.example;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-/**
- * Partida: Modelo - Lógica del juego de Escoba
- */
 public class Partida {
     private List<Jugador> jugadores;
     private Baraja baraja;
@@ -44,23 +43,11 @@ public class Partida {
             return false;
         }
 
-        for (Jugador j :  jugadores) {
-            if (!j.getMano().isEmpty()){
-                return false;
-            }
-        }
-
-        return true;
+        return jugadores.stream().allMatch(j -> j.getMano().isEmpty());
     }
 
     public boolean jugadoresSinCartas() {
-        for (Jugador j :  jugadores) {
-            if (!j.getMano().isEmpty()){
-                return false;
-            }
-        }
-
-        return true;
+        return jugadores.stream().allMatch(j -> j.getMano().isEmpty());
     }
 
     public boolean debesMostrarUltimas() {
@@ -125,37 +112,63 @@ public class Partida {
                 empateCartas, empateOros, empateSietes);
 
         // Calcular puntos finales
-        int[] puntos = new int[jugadores.size()];
-        // Cartas
-        if (!empateCartas) {
-            for (int i = 0; i < jugadores.size(); i++) {
-                if (ganadoresCartas.contains(jugadores.get(i))) puntos[i]++;
-            }
-        }
-        // Oros
-        if (!empateOros) {
-            for (int i = 0; i < jugadores.size(); i++) {
-                if (ganadoresOros.contains(jugadores.get(i))) puntos[i]++;
-            }
-        }
-        // Sietes
-        if (!empateSietes) {
-            for (int i = 0; i < jugadores.size(); i++) {
-                if (ganadoresSietes.contains(jugadores.get(i))) puntos[i]++;
-            }
-        }
-        // Escobas
-        for (int i = 0; i < jugadores.size(); i++) {
-            puntos[i] += jugadores.get(i).getMonton().getEscobas();
-        }
-        // Velo
-        for (int i = 0; i < jugadores.size(); i++) {
-            if (jugadores.get(i).getMonton().getVelo()) puntos[i]++;
-        }
+        int[] puntos = calcularPuntosTotales(ganadoresCartas, ganadoresOros, ganadoresSietes,
+                empateCartas, empateOros, empateSietes);
 
         // Mostrar puntos finales
         vista.mostrarPuntosFinales(jugadores, puntos);
 
+        determinarGanador(vista, puntos);
+    }
+
+    private int[] calcularPuntosTotales(List<Jugador> ganadoresCartas, List<Jugador> ganadoresOros,
+                                        List<Jugador> ganadoresSietes, boolean empateCartas,
+                                        boolean empateOros, boolean empateSietes) {
+        // Usar Map para mejor legibilidad y mantenibilidad
+        Map<Jugador, Integer> puntosMap = new HashMap<>();
+        for (Jugador j : jugadores) {
+            puntosMap.put(j, 0);
+        }
+
+        // Cartas
+        if (!empateCartas) {
+            for (Jugador ganador : ganadoresCartas) {
+                puntosMap.put(ganador, puntosMap.get(ganador) + 1);
+            }
+        }
+        // Oros
+        if (!empateOros) {
+            for (Jugador ganador : ganadoresOros) {
+                puntosMap.put(ganador, puntosMap.get(ganador) + 1);
+            }
+        }
+        // Sietes
+        if (!empateSietes) {
+            for (Jugador ganador : ganadoresSietes) {
+                puntosMap.put(ganador, puntosMap.get(ganador) + 1);
+            }
+        }
+        // Escobas
+        for (Jugador j : jugadores) {
+            puntosMap.put(j, puntosMap.get(j) + j.getMonton().getEscobas());
+        }
+        // Velo
+        for (Jugador j : jugadores) {
+            if (j.getMonton().getVelo()) {
+                puntosMap.put(j, puntosMap.get(j) + 1);
+            }
+        }
+
+        // Convertir Map a array para mantener compatibilidad
+        int[] puntos = new int[jugadores.size()];
+        for (int i = 0; i < jugadores.size(); i++) {
+            puntos[i] = puntosMap.get(jugadores.get(i));
+        }
+
+        return puntos;
+    }
+
+    private void determinarGanador(Vista vista, int[] puntos) {
         int maxPuntos = -1;
         List<Integer> indicesGanadores = new ArrayList<>();
         for (int i = 0; i < jugadores.size(); i++) {
@@ -186,6 +199,10 @@ public class Partida {
         return mesa;
     }
 
+    public List<Jugador> getJugadores() {
+        return new ArrayList<>(jugadores);
+    }
+
     public Jugador jugadorActual() {
         return jugadores.get(turnoActual);
     }
@@ -199,31 +216,7 @@ public class Partida {
         int mejorPuntaje = -1;
 
         for (List<Carta> combinacion : combinaciones) {
-            int puntaje = 0;
-
-            // Prioridad 1: Cartas de oros (+1000 puntos si contiene al menos una carta de oros)
-            boolean tieneOros = false;
-            for (Carta carta : combinacion) {
-                if (carta.getPalo() == Carta.OROS) {
-                    tieneOros = true;
-                    break;
-                }
-            }
-            if (tieneOros) {
-                puntaje += 1000;
-            }
-
-            // Prioridad 2: Cartas con valor 7 (+100 puntos por cada siete)
-            int cantidadSietes = 0;
-            for (Carta carta : combinacion) {
-                if (carta.getNumero() == 7) {
-                    cantidadSietes++;
-                }
-            }
-            puntaje += cantidadSietes * 100;
-
-            // Prioridad 3: Cantidad de cartas (+10 puntos por carta)
-            puntaje += combinacion.size() * 10;
+            int puntaje = calcularPuntajeCombinacion(combinacion);
 
             // Seleccionar la combinación con mayor puntaje
             if (puntaje > mejorPuntaje) {
@@ -235,35 +228,45 @@ public class Partida {
         return mejorCombinacion;
     }
 
+    private static int calcularPuntajeCombinacion(List<Carta> combinacion) {
+        int puntaje = 0;
+
+        // Prioridad 1: Cartas de oros (+1000 puntos si contiene al menos una carta de oros)
+        boolean tieneOros = false;
+        for (Carta carta : combinacion) {
+            if (carta.getPalo() == Carta.OROS) {
+                tieneOros = true;
+                break;
+            }
+        }
+        if (tieneOros) {
+            puntaje += 1000;
+        }
+
+        // Prioridad 2: Cartas con valor 7 (+100 puntos por cada siete)
+        int cantidadSietes = 0;
+        for (Carta carta : combinacion) {
+            if (carta.getNumero() == 7) {
+                cantidadSietes++;
+            }
+        }
+        puntaje += cantidadSietes * 100;
+
+        // Prioridad 3: Cantidad de cartas (+10 puntos por carta)
+        puntaje += combinacion.size() * 10;
+
+        return puntaje;
+    }
+
     public int elegirMejorCartaCPU(List<Carta> mano) {
         int mejorIndice = 0; // Por defecto, la primera carta
         int mejorPuntaje = Integer.MIN_VALUE;
 
         for (int i = 0; i < mano.size(); i++) {
             Carta carta = mano.get(i);
-            int puntaje = 0;
 
             List<List<Carta>> combinaciones = mesa.buscarCombinaciones(carta);
-            if (!combinaciones.isEmpty()) {
-                // Si hay combinaciones, usar la mejor combinación posible
-                List<Carta> mejorCombi = seleccionarMejorCombinacion(combinaciones);
-                // Puntuar igual que en seleccionarMejorCombinacion
-                boolean tieneOros = false;
-                int cantidadSietes = 0;
-                for (Carta c : mejorCombi) {
-                    if (c.getPalo() == Carta.OROS) tieneOros = true;
-                    if (c.getNumero() == 7) cantidadSietes++;
-                }
-                if (tieneOros) puntaje += 1000;
-                puntaje += cantidadSietes * 100;
-                puntaje += mejorCombi.size() * 10;
-                // Prioridad extra por poder capturar
-                puntaje += 10000;
-            } else {
-                // Si no hay combinación, priorizar oros y sietes en mano
-                if (carta.getPalo() == Carta.OROS) puntaje += 1000;
-                if (carta.getNumero() == 7) puntaje += 100;
-            }
+            int puntaje = calcularPuntajeCartaCPU(carta, combinaciones);
 
             if (puntaje > mejorPuntaje) {
                 mejorPuntaje = puntaje;
@@ -271,5 +274,33 @@ public class Partida {
             }
         }
         return mejorIndice;
+    }
+
+    private static int calcularPuntajeCartaCPU(Carta carta, List<List<Carta>> combinaciones) {
+        int puntaje = 0;
+
+        if (!combinaciones.isEmpty()) {
+            // Si hay combinaciones, usar la mejor combinación posible
+            List<Carta> mejorCombi = new ArrayList<>(combinaciones.get(0));
+            if (combinaciones.size() > 1) {
+                int mejorPuntajeComb = calcularPuntajeCombinacion(mejorCombi);
+                for (List<Carta> combi : combinaciones) {
+                    int puntajeCombi = calcularPuntajeCombinacion(combi);
+                    if (puntajeCombi > mejorPuntajeComb) {
+                        mejorPuntajeComb = puntajeCombi;
+                        mejorCombi = new ArrayList<>(combi);
+                    }
+                }
+            }
+            puntaje = calcularPuntajeCombinacion(mejorCombi);
+            // Prioridad extra por poder capturar
+            puntaje += 10000;
+        } else {
+            // Si no hay combinación, priorizar oros y sietes en mano
+            if (carta.getPalo() == Carta.OROS) puntaje += 1000;
+            if (carta.getNumero() == 7) puntaje += 100;
+        }
+
+        return puntaje;
     }
 }

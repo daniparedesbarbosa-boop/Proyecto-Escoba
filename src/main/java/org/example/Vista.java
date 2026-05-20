@@ -29,24 +29,26 @@ public class Vista {
     }
 
     public int pedirNumeroRivales() {
-        int numCPUs = 0;
-        while (numCPUs < 1 || numCPUs > 3) {
+        while (true) {
             System.out.print("¿Contra cuántos quieres jugar? (1-3): ");
-            try {
-                numCPUs = scanner.nextInt();
-                scanner.nextLine();
-
-                if (numCPUs < 1 || numCPUs > 3) {
-                    System.out.println("Introduce un número entre 1 y 3");
-                    numCPUs = 0;
-                }
-            } catch (Exception e) {
-                System.out.println("Introduce un número válido");
-                scanner.nextLine();
-                numCPUs = 0;
+            int numCPUs = leerNumeroValido();
+            if (numCPUs >= 1 && numCPUs <= 3) {
+                return numCPUs;
             }
+            System.out.println("Introduce un número entre 1 y 3");
         }
-        return numCPUs;
+    }
+
+    private int leerNumeroValido() {
+        try {
+            int numero = scanner.nextInt();
+            scanner.nextLine();
+            return numero;
+        } catch (Exception e) {
+            System.out.println("Introduce un número válido");
+            scanner.nextLine();
+            return -1;
+        }
     }
 
     public void mostrarConfiguracion(String nombreJugador, List<String> rivales) {
@@ -55,7 +57,9 @@ public class Vista {
         System.out.println("║           EMPIEZA LA PARTIDA          ║");
         System.out.println("╚═══════════════════════════════════════╝");
         System.out.println();
-        System.out.println("Jugador: " + nombreJugador);
+        StringBuilder sb = new StringBuilder();
+        sb.append("Jugador: ").append(nombreJugador);
+        System.out.println(sb.toString());
         System.out.print("Rivales: ");
         for (int i = 0; i < rivales.size(); i++) {
             System.out.print(rivales.get(i));
@@ -98,36 +102,55 @@ public class Vista {
     }
 
     public void mostrarTurnoJugador(String nombreJugador) {
-        System.out.println("\nTurno de: " + nombreJugador);
+        StringBuilder sb = new StringBuilder();
+        sb.append("\nTurno de: ").append(nombreJugador);
+        System.out.println(sb.toString());
     }
 
     public void mostrarCartasJugador(List<Carta> mano) {
         System.out.println("\nTu mano:");
         for (int i = 0; i < mano.size(); i++) {
-            System.out.println((i + 1) + " - " + mano.get(i));
+            StringBuilder sb = new StringBuilder();
+            sb.append(i + 1).append(" - ").append(mano.get(i));
+            System.out.println(sb.toString());
         }
     }
 
     public int elegirCartaJugador(List<Carta> mano) {
-        int opcion;
-        do {
+        while (true) {
             mostrarCartasJugador(mano);
-            System.out.print("Elige una carta (1-" + mano.size() + "): ");
-            try {
-                opcion = scanner.nextInt();
-                scanner.nextLine();
-            } catch (Exception e) {
-                System.out.println("Introduce un número válido");
-                scanner.nextLine();
-                opcion = 0;
+            int opcion = pedirIndiceCartaValido(mano.size());
+            if (opcion > 0) {
+                return opcion - 1;
             }
-        } while (opcion < 1 || opcion > mano.size());
+        }
+    }
 
-        return opcion - 1;
+    private int pedirIndiceCartaValido(int max) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Elige una carta (1-").append(max).append("): ");
+        System.out.print(sb.toString());
+        try {
+            int opcion = scanner.nextInt();
+            scanner.nextLine();
+            if (opcion < 1 || opcion > max) {
+                StringBuilder sb2 = new StringBuilder();
+                sb2.append("Introduce un número entre 1 y ").append(max);
+                System.out.println(sb2.toString());
+                return -1;
+            }
+            return opcion;
+        } catch (Exception e) {
+            System.out.println("Introduce un número válido");
+            scanner.nextLine();
+            return -1;
+        }
     }
 
     public void mostrarJugadaJugador(String nombreJugador, Carta carta) {
-        System.out.println(nombreJugador + " juega: " + carta);
+        StringBuilder sb = new StringBuilder();
+        sb.append(nombreJugador).append(" juega: ").append(carta);
+        System.out.println(sb.toString());
     }
 
     public void mostrarCartasCapturadas(List<Carta> cartas) {
@@ -154,14 +177,15 @@ public class Vista {
     }
 
     public void mostrarCartasFinales(String nombreJugador, List<Carta> cartas) {
-        System.out.print("Cartas finales en la mesa asignadas a " + nombreJugador + ": ");
+        StringBuilder sb = new StringBuilder();
+        sb.append("Cartas finales en la mesa asignadas a ").append(nombreJugador).append(": ");
         for (int i = 0; i < cartas.size(); i++) {
-            System.out.print(cartas.get(i));
+            sb.append(cartas.get(i));
             if (i < cartas.size() - 1) {
-                System.out.print(" | ");
+                sb.append(" | ");
             }
         }
-        System.out.println();
+        System.out.println(sb.toString());
     }
 
     public void mostrarFinPartida() {
@@ -184,41 +208,62 @@ public class Vista {
         System.out.println("\nPuntos:");
         String formato = "| %-12s | %-6s | %-6s | %-6s | %-4s | %-7s |";
         String separador = "+--------------+--------+--------+--------+------+---------+";
+
+        imprimirEncabezadoTabla(separador, formato);
+
+        for (Jugador j : jugadores) {
+            imprimirFilaJugador(j, formato, ganadoresCartas, ganadoresOros, ganadoresSietes,
+                               empateCartas, empateOros, empateSietes);
+        }
+
+        System.out.println(separador);
+    }
+
+    private void imprimirEncabezadoTabla(String separador, String formato) {
         System.out.println(separador);
         System.out.printf(formato, "Jugador", "Cartas", "Oros", "Sietes", "Velo", "Escobas");
         System.out.println();
         System.out.println(separador);
+    }
 
-        for (Jugador j : jugadores) {
-            MontonJugador m = j.getMonton();
-            String nombre = j.getNombre();
-            String cartas = String.valueOf(m.getCartasCapturadas());
-            String oros = String.valueOf(m.getOrosCapturados());
-            String sietes = String.valueOf(m.getSietes());
-            String escobas = String.valueOf(m.getEscobas());
-            String velo = m.getVelo() ? "Sí" : "No";
+    private void imprimirFilaJugador(Jugador j, String formato, List<Jugador> ganadoresCartas,
+                                     List<Jugador> ganadoresOros, List<Jugador> ganadoresSietes,
+                                     boolean empateCartas, boolean empateOros, boolean empateSietes) {
+        MontonJugador m = j.getMonton();
+        String nombre = j.getNombre();
+        String cartas = formatearCeldaGanador(m.getCartasCapturadas(), ganadoresCartas.contains(j), empateCartas);
+        String oros = formatearCeldaGanador(m.getOrosCapturados(), ganadoresOros.contains(j), empateOros);
+        String sietes = formatearCeldaGanador(m.getSietes(), ganadoresSietes.contains(j), empateSietes);
+        String velo = m.getVelo() ? "Sí *" : "No";
+        String escobas = String.valueOf(m.getEscobas());
 
-            // Marcar ganadores con * solo si no hay empate
-            if (!empateCartas && ganadoresCartas.contains(j)) cartas += " *";
-            if (!empateOros && ganadoresOros.contains(j)) oros += " *";
-            if (!empateSietes && ganadoresSietes.contains(j)) sietes += " *";
-            if (m.getVelo()) velo += " *";
+        System.out.printf(formato, nombre, cartas, oros, sietes, velo, escobas);
+        System.out.println();
+    }
 
-            System.out.printf(formato, nombre, cartas, oros, sietes, velo, escobas);
-            System.out.println();
+    private String formatearCeldaGanador(int valor, boolean esGanador, boolean hayEmpate) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(valor);
+        if (!hayEmpate && esGanador) {
+            sb.append(" *");
         }
-        System.out.println(separador);
+        return sb.toString();
     }
 
     public void mostrarPuntosFinales(List<Jugador> jugadores, int[] puntos) {
         System.out.println("\nPuntos finales:");
         for (int i = 0; i < jugadores.size(); i++) {
-            System.out.println(jugadores.get(i).getNombre() + ": " + puntos[i] + " punto" + (puntos[i] == 1 ? "" : "s"));
+            StringBuilder sb = new StringBuilder();
+            sb.append(jugadores.get(i).getNombre()).append(": ").append(puntos[i])
+              .append(" punto").append(puntos[i] == 1 ? "" : "s");
+            System.out.println(sb.toString());
         }
     }
 
     public void mostrarGanador(String nombreGanador, boolean esJugador) {
-        System.out.println("\n¡El ganador de la partida es: " + nombreGanador + "!");
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n¡El ganador de la partida es: ").append(nombreGanador).append("!");
+        System.out.println(sb.toString());
         if (esJugador) {
             System.out.println("¡Felicidades, has ganado la partida! 🎉");
         } else {

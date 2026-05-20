@@ -20,11 +20,14 @@ public class MontonJugador {
     public void agregarCartas(List<Carta> nuevas) {
         cartas.addAll(nuevas);
         cartasCapturadas += nuevas.size();
-        for (Carta c : nuevas) {
-            if (c.getPalo() == Carta.OROS) {
-                orosCapturados++;
-            }
-        }
+        actualizarOrosCapturados(nuevas);
+    }
+
+    private void actualizarOrosCapturados(List<Carta> nuevas) {
+        long orosNuevos = nuevas.stream()
+                                  .filter(c -> c.getPalo() == Carta.OROS)
+                                  .count();
+        orosCapturados += orosNuevos;
     }
 
     public void sumarEscoba() {
@@ -40,31 +43,22 @@ public class MontonJugador {
     }
 
     public int getOros() {
-        int count = 0;
-        for (Carta c : cartas) {
-            if (c.getPalo() == Carta.OROS) {
-                count++;
-            }
-        } return count;
+        return (int) cartas.stream()
+                           .filter(c -> c.getPalo() == Carta.OROS)
+                           .count();
     }
 
     public int getSietes() {
-        int contador = 0;
-        for (Carta c : cartas) {
-            if (c.getNumero() == 7) {
-                contador++;
-            }
-        }
-        return contador;
+        return (int) cartas.stream()
+                           .filter(c -> c.getNumero() == 7)
+                           .count();
     }
 
     public boolean getVelo() {
-        for (Carta c : cartas) {
-            if (c.getNumero() == 7 && c.getPalo() == Carta.OROS) {
-                return true;
-            }
-        } return false;
+        return cartas.stream()
+                     .anyMatch(c -> c.getNumero() == 7 && c.getPalo() == Carta.OROS);
     }
+
 
     public int getCartasCapturadas() {
         return cartasCapturadas;

@@ -31,7 +31,7 @@ public class Carta {
         return valor;
     }
 
-    private String emojiPalo() {
+    private static String emojiPalo(char palo) {
         switch (palo) {
             case OROS: return "\uD83E\uDE99"; // 🪙
             case COPAS: return "\uD83C\uDF77"; // 🍷
@@ -41,7 +41,7 @@ public class Carta {
         }
     }
 
-    private String displayNumero() {
+    private static String displayNumero(int numero) {
         switch (numero) {
             case 8: return "SOTA";
             case 9: return "CABALLO";
@@ -52,7 +52,9 @@ public class Carta {
 
     @Override
     public String toString() {
-        String nombreCarta = displayNumero();
-        return nombreCarta + " " + emojiPalo();
+        String nombreCarta = displayNumero(numero);
+        StringBuilder sb = new StringBuilder();
+        sb.append(nombreCarta).append(" ").append(emojiPalo(palo));
+        return sb.toString();
     }
 }
