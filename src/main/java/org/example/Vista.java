@@ -3,9 +3,6 @@ package org.example;
 import java.util.List;
 import java.util.Scanner;
 
-/**
- * Vista: Maneja toda la presentación y entrada del usuario
- */
 public class Vista {
     private Scanner scanner;
 

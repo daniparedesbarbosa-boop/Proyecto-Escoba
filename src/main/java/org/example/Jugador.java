@@ -2,9 +2,6 @@ package org.example;
 
 import java.util.*;
 
-/**
- * Jugador: Modelo - Representa a un jugador (humano o CPU)
- */
 public class Jugador {
     private String nombre;
     private List<Carta> mano;

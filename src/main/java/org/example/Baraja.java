@@ -5,9 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Baraja: Modelo - Gestiona las cartas del juego
- */
 public class Baraja {
     private List<Carta> mazo;
 

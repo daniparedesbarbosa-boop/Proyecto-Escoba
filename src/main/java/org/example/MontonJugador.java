@@ -3,9 +3,6 @@ package org.example;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * MontonJugador: Modelo - Gestiona las cartas capturadas por un jugador
- */
 public class MontonJugador {
     private List<Carta> cartas;
     private int escobas;

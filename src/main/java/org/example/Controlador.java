@@ -5,9 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Controlador: Orquesta la lógica del juego entre Modelo y Vista
- */
 public class Controlador {
     private Vista vista;
     private Partida partida;

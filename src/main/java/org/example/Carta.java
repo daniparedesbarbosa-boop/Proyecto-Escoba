@@ -1,8 +1,5 @@
 package org.example;
 
-/**
- * Carta: Modelo - Representa una carta de la baraja
- */
 public class Carta {
     public static final char OROS = 'O';
     public static final char COPAS = 'C';
