@@ -34,7 +34,7 @@ public class Partida {
         if (!mesa.mesaVacia() && ultimoQueCapturo != null) {
             List<Carta> cartasFinales = new ArrayList<>(mesa.getCartas());
             ultimoQueCapturo.getMonton().agregarCartas(cartasFinales);
-            mesa.getCartas().clear();
+            mesa.limpiarMesa();
         }
     }
 
@@ -70,7 +70,7 @@ public class Partida {
         }
     }
 
-    public void mostrarYcalcularPuntos(Vista vista) {
+    public int[] mostrarYcalcularPuntos(Vista vista) {
         int maxCartas = -1;
         int maxOros = -1;
         int maxSietes = -1;
@@ -119,6 +119,8 @@ public class Partida {
         vista.mostrarPuntosFinales(jugadores, puntos);
 
         determinarGanador(vista, puntos);
+
+        return puntos;
     }
 
     private int[] calcularPuntosTotales(List<Jugador> ganadoresCartas, List<Jugador> ganadoresOros,

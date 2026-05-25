@@ -11,10 +11,12 @@ public class Controlador {
     private List<String> nombresJugadores;
     private String nombreJugador;
     private Map<String, Jugador> mapajugadores;
+    private GestorArchivos gestorArchivos;
 
     public Controlador(Vista vista) {
         this.vista = vista;
         this.mapajugadores = new HashMap<>();
+        this.gestorArchivos = new GestorArchivos();
     }
 
     public void iniciarJuego() {
@@ -177,7 +179,34 @@ public class Controlador {
 
     private void mostrarResultados() {
         vista.mostrarEncabezadoResultados();
-        partida.mostrarYcalcularPuntos(vista);
+        int[] puntos = partida.mostrarYcalcularPuntos(vista);
+        guardarHistorialPartida(puntos);
+    }
+
+    private void guardarHistorialPartida(int[] puntos) {
+        String ganador = obtenerNombreGanador(puntos);
+        gestorArchivos.guardarHistorialPartida(partida.getJugadores(), puntos, ganador);
+    }
+
+    private String obtenerNombreGanador(int[] puntos) {
+        int maxPuntos = -1;
+        List<Integer> indicesGanadores = new ArrayList<>();
+
+        for (int i = 0; i < puntos.length; i++) {
+            if (puntos[i] > maxPuntos) {
+                maxPuntos = puntos[i];
+                indicesGanadores.clear();
+                indicesGanadores.add(i);
+            } else if (puntos[i] == maxPuntos) {
+                indicesGanadores.add(i);
+            }
+        }
+
+        if (indicesGanadores.size() != 1) {
+            return null;
+        }
+
+        return partida.getJugadores().get(indicesGanadores.get(0)).getNombre();
     }
 }
 
