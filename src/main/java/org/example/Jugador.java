@@ -6,6 +6,7 @@ public class Jugador {
     private String nombre;
     private List<Carta> mano;
     private MontonJugador monton;
+    private int puntosTotales = 0; // Puntos acumulados a lo largo de varias partidas
 
     public Jugador(String nombre) {
         if (nombre == null || nombre.trim().isEmpty()) {
@@ -45,5 +46,23 @@ public class Jugador {
 
     public int getCantidadCartasEnMano() {
         return mano.size();
+    }
+
+    /**
+     * Reinicia el estado del jugador para una nueva partida (limpia mano y montón),
+     * pero mantiene los puntos totales acumulados.
+     */
+    public void reiniciarEstadoPartida() {
+        this.mano = new ArrayList<>();
+        this.monton = new MontonJugador();
+    }
+
+    public int getPuntosTotales() {
+        return puntosTotales;
+    }
+
+    public void addPuntosTotales(int puntos) {
+        if (puntos < 0) return;
+        this.puntosTotales += puntos;
     }
 }

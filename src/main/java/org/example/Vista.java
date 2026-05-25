@@ -275,6 +275,15 @@ public class Vista {
               .append(" punto").append(puntos[i] == 1 ? "" : "s");
             System.out.println(sb.toString());
         }
+
+        // Mostrar puntos totales acumulados hasta ahora (sumatoria de rondas anteriores + ronda actual)
+        System.out.println("\nPuntos totales:");
+        for (Jugador j : jugadores) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(j.getNombre()).append(": ").append(j.getPuntosTotales())
+              .append(" punto").append(j.getPuntosTotales() == 1 ? "" : "s");
+            System.out.println(sb.toString());
+        }
     }
 
     public void mostrarGanador(String nombreGanador, boolean esJugador) {
