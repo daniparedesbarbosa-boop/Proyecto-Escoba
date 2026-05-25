@@ -8,6 +8,9 @@ public class Jugador {
     private MontonJugador monton;
 
     public Jugador(String nombre) {
+        if (nombre == null || nombre.trim().isEmpty()) {
+            throw new IllegalArgumentException("El nombre del jugador no puede estar vacío");
+        }
         this.nombre = nombre;
         this.mano = new ArrayList<>();
         this.monton = new MontonJugador();
@@ -30,6 +33,9 @@ public class Jugador {
     }
 
     public Carta jugarCarta(int indice) {
+        if (indice < 0 || indice >= mano.size()) {
+            throw new IllegalArgumentException("Índice de carta fuera de rango: " + indice);
+        }
         return mano.remove(indice);
     }
 

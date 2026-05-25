@@ -14,6 +14,9 @@ public class Controlador {
     private GestorArchivos gestorArchivos;
 
     public Controlador(Vista vista) {
+        if (vista == null) {
+            throw new IllegalArgumentException("La vista no puede ser nula");
+        }
         this.vista = vista;
         this.mapajugadores = new HashMap<>();
         this.gestorArchivos = new GestorArchivos();
@@ -123,6 +126,10 @@ public class Controlador {
 
     private int elegirCartaJugador(Jugador jugador) {
         List<Carta> mano = jugador.getMano();
+
+        if (mano.isEmpty()) {
+            throw new IllegalStateException("El jugador " + jugador.getNombre() + " no tiene cartas para jugar");
+        }
 
         // Si es una CPU, elegir automáticamente
         if (esCPU(jugador)) {

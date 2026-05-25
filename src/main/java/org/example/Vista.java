@@ -1,6 +1,7 @@
 package org.example;
 
 import java.util.List;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Vista {
@@ -41,9 +42,12 @@ public class Vista {
             int numero = scanner.nextInt();
             scanner.nextLine();
             return numero;
-        } catch (Exception e) {
+        } catch (InputMismatchException e) {
             System.out.println("Introduce un número válido");
             scanner.nextLine();
+            return -1;
+        } catch (IllegalStateException e) {
+            System.out.println("No se pudo leer la entrada");
             return -1;
         }
     }
@@ -137,9 +141,12 @@ public class Vista {
                 return -1;
             }
             return opcion;
-        } catch (Exception e) {
+        } catch (InputMismatchException e) {
             System.out.println("Introduce un número válido");
             scanner.nextLine();
+            return -1;
+        } catch (IllegalStateException e) {
+            System.out.println("No se pudo leer la entrada");
             return -1;
         }
     }

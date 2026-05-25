@@ -1,6 +1,7 @@
 package org.example;
 
 import java.io.BufferedWriter;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -9,6 +10,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 public class GestorArchivos {
@@ -17,6 +19,14 @@ public class GestorArchivos {
     private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public void guardarHistorialPartida(List<Jugador> jugadores, int[] puntos, String ganador) {
+        if (jugadores == null || puntos == null) {
+            throw new IllegalArgumentException("Los datos de la partida no pueden ser nulos");
+        }
+
+        if (jugadores.size() != puntos.length) {
+            throw new IllegalArgumentException("El número de jugadores y de puntuaciones debe coincidir");
+        }
+
         Path ruta = resolverRutaHistorial();
         boolean necesitaCabecera = Files.notExists(ruta);
         boolean separarPartidas = false;
@@ -72,7 +82,31 @@ public class GestorArchivos {
             }
         } catch (IOException e) {
             System.err.println("No se pudo guardar el historial de la partida: " + e.getMessage());
+        } catch (SecurityException e) {
+            System.err.println("No hay permisos para escribir el historial de la partida: " + e.getMessage());
         }
+    }
+
+    public List<String> cargarHistorialPartidas() {
+        Path ruta = resolverRutaHistorial();
+        List<String> lineas = new ArrayList<>();
+
+        if (Files.notExists(ruta)) {
+            return lineas;
+        }
+
+        try (BufferedReader reader = Files.newBufferedReader(ruta, StandardCharsets.UTF_8)) {
+            String linea;
+            while ((linea = reader.readLine()) != null) {
+                lineas.add(linea);
+            }
+        } catch (IOException e) {
+            System.err.println("No se pudo leer el historial de la partida: " + e.getMessage());
+        } catch (SecurityException e) {
+            System.err.println("No hay permisos para leer el historial de la partida: " + e.getMessage());
+        }
+
+        return lineas;
     }
 
     private Path resolverRutaHistorial() {

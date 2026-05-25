@@ -14,11 +14,17 @@ public class Partida {
     private boolean ultimasCartasMostrado = false;
 
     public Partida(List<String> nombresJugadores) {
+        if (nombresJugadores == null || nombresJugadores.isEmpty()) {
+            throw new IllegalArgumentException("Debe haber al menos un jugador");
+        }
         baraja = new Baraja();
         mesa = new Mesa();
         jugadores = new ArrayList<>();
 
         for (String nombre : nombresJugadores) {
+            if (nombre == null || nombre.trim().isEmpty()) {
+                throw new IllegalArgumentException("El nombre de un jugador no puede estar vacío");
+            }
             jugadores.add(new Jugador(nombre));
         }
 
