@@ -37,6 +37,17 @@ public class Vista {
         }
     }
 
+    public int pedirObjetivoPuntos() {
+        while (true) {
+            System.out.print("¿A cuántos puntos quieres jugar? (21/31): ");
+            int valor = leerNumeroValido();
+            if (valor == 21 || valor == 31) {
+                return valor;
+            }
+            System.out.println("Introduce 21 o 31");
+        }
+    }
+
     private int leerNumeroValido() {
         try {
             int numero = scanner.nextInt();
@@ -193,7 +204,7 @@ public class Vista {
     }
 
     public void mostrarFinPartida() {
-        System.out.println("Fin de la partida");
+        System.out.println("Fin de la ronda");
     }
 
     // ===== MÉTODOS DE RESULTADOS =====
@@ -201,7 +212,7 @@ public class Vista {
     public void mostrarEncabezadoResultados() {
         System.out.println();
         System.out.println("╔═══════════════════════════════════════╗");
-        System.out.println("║           FIN DE LA PARTIDA           ║");
+        System.out.println("║           FIN DE LA RONDA             ║");
         System.out.println("╚═══════════════════════════════════════╝");
         System.out.println();
     }
@@ -210,8 +221,9 @@ public class Vista {
                                        List<Jugador> ganadoresOros, List<Jugador> ganadoresSietes,
                                        boolean empateCartas, boolean empateOros, boolean empateSietes) {
         System.out.println("\nPuntos:");
-        String formato = "| %-12s | %-6s | %-6s | %-6s | %-4s | %-7s |";
-        String separador = "+--------------+--------+--------+--------+------+---------+";
+        // Añadimos columna Total para mostrar puntos acumulados
+        String formato = "| %-12s | %-6s | %-6s | %-6s | %-4s | %-7s | %-5s |";
+        String separador = "+--------------+--------+--------+--------+------+---------+-------+";
 
         imprimirEncabezadoTabla(separador, formato);
 
@@ -225,7 +237,7 @@ public class Vista {
 
     private void imprimirEncabezadoTabla(String separador, String formato) {
         System.out.println(separador);
-        System.out.printf(formato, "Jugador", "Cartas", "Oros", "Sietes", "Velo", "Escobas");
+        System.out.printf(formato, "Jugador", "Cartas", "Oros", "Sietes", "Velo", "Escobas", "Total");
         System.out.println();
         System.out.println(separador);
     }
@@ -240,8 +252,9 @@ public class Vista {
         String sietes = formatearCeldaGanador(m.getSietes(), ganadoresSietes.contains(j), empateSietes);
         String velo = m.getVelo() ? "Sí *" : "No";
         String escobas = String.valueOf(m.getEscobas());
+        String total = String.valueOf(j.getPuntosTotales());
 
-        System.out.printf(formato, nombre, cartas, oros, sietes, velo, escobas);
+        System.out.printf(formato, nombre, cartas, oros, sietes, velo, escobas, total);
         System.out.println();
     }
 
@@ -255,7 +268,7 @@ public class Vista {
     }
 
     public void mostrarPuntosFinales(List<Jugador> jugadores, int[] puntos) {
-        System.out.println("\nPuntos finales:");
+        System.out.println("\nPuntos de la ronda:");
         for (int i = 0; i < jugadores.size(); i++) {
             StringBuilder sb = new StringBuilder();
             sb.append(jugadores.get(i).getNombre()).append(": ").append(puntos[i])
@@ -266,17 +279,17 @@ public class Vista {
 
     public void mostrarGanador(String nombreGanador, boolean esJugador) {
         StringBuilder sb = new StringBuilder();
-        sb.append("\n¡El ganador de la partida es: ").append(nombreGanador).append("!");
+        sb.append("\n¡El ganador de la ronda es: ").append(nombreGanador).append("!");
         System.out.println(sb.toString());
         if (esJugador) {
-            System.out.println("¡Felicidades, has ganado la partida! 🎉");
+            System.out.println("¡Felicidades, has ganado esta ronda! 🎉");
         } else {
             System.out.println("¡Ánimo! La próxima vez seguro que ganas tú.");
         }
     }
 
     public void mostrarEmpate() {
-        System.out.println("\nLa partida terminó en empate.");
+        System.out.println("\nLa ronda terminó en empate.");
     }
 
     public void mostrarAdiós() {

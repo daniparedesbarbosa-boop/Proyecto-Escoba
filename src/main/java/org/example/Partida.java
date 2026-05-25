@@ -31,6 +31,33 @@ public class Partida {
         turnoActual = 0;
     }
 
+    // Constructor privado usado por la fábrica crearConJugadoresExistentes
+    private Partida() {
+        baraja = new Baraja();
+        mesa = new Mesa();
+        jugadores = new ArrayList<>();
+        turnoActual = 0;
+    }
+
+    /**
+     * Fábrica para crear una partida reutilizando instancias de Jugador (manteniendo
+     * los puntos acumulados). Se usa en lugar de un constructor con lista genérica
+     * para evitar la colisión por borrado de tipos (erasure) entre
+     * Partida(List<String>) y Partida(List<Jugador>).
+     */
+    public static Partida crearConJugadoresExistentes(List<Jugador> jugadoresExistentes) {
+        if (jugadoresExistentes == null || jugadoresExistentes.isEmpty()) {
+            throw new IllegalArgumentException("Debe haber al menos un jugador");
+        }
+        Partida p = new Partida();
+        // Reiniciar mano/monton de cada jugador pero conservar sus puntos totales
+        for (Jugador j : jugadoresExistentes) {
+            j.reiniciarEstadoPartida();
+            p.jugadores.add(j);
+        }
+        return p;
+    }
+
     public void siguienteTurno() {
         turnoActual = (turnoActual + 1) % jugadores.size();
     }
@@ -113,15 +140,20 @@ public class Partida {
         boolean empateOros = ganadoresOros.size() > 1;
         boolean empateSietes = ganadoresSietes.size() > 1;
 
-        // Mostrar tabla
-        vista.mostrarTablaResultados(jugadores, ganadoresCartas, ganadoresOros, ganadoresSietes,
-                empateCartas, empateOros, empateSietes);
-
-        // Calcular puntos finales
+        // Calcular puntos finales de esta partida
         int[] puntos = calcularPuntosTotales(ganadoresCartas, ganadoresOros, ganadoresSietes,
                 empateCartas, empateOros, empateSietes);
 
-        // Mostrar puntos finales
+        // Acumular los puntos en cada jugador
+        for (int i = 0; i < jugadores.size(); i++) {
+            jugadores.get(i).addPuntosTotales(puntos[i]);
+        }
+
+        // Mostrar tabla (ahora incluye los puntos totales acumulados)
+        vista.mostrarTablaResultados(jugadores, ganadoresCartas, ganadoresOros, ganadoresSietes,
+                empateCartas, empateOros, empateSietes);
+
+        // Mostrar puntos finales (puntos de la partida)
         vista.mostrarPuntosFinales(jugadores, puntos);
 
         determinarGanador(vista, puntos);

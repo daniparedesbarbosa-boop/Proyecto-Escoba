@@ -12,6 +12,8 @@ public class Controlador {
     private String nombreJugador;
     private Map<String, Jugador> mapajugadores;
     private GestorArchivos gestorArchivos;
+    private List<Jugador> jugadoresPersistentes;
+    private int objetivoPuntos = 31; // por defecto
 
     public Controlador(Vista vista) {
         if (vista == null) {
@@ -25,11 +27,47 @@ public class Controlador {
     public void iniciarJuego() {
         vista.mostrarBienvenida();
         configurarJugadores();
-        inicializarPartida();
+        // Preguntar objetivo (21 o 31)
+        objetivoPuntos = vista.pedirObjetivoPuntos();
+
+        // Crear instancias persistentes de Jugador para acumular puntos entre partidas
+        jugadoresPersistentes = new ArrayList<>();
+        for (String nombre : nombresJugadores) {
+            Jugador j = new Jugador(nombre);
+            jugadoresPersistentes.add(j);
+            mapajugadores.put(j.getNombre(), j);
+        }
+        // La partida se inicializa dentro del bucle principal para reutilizar jugadoresPersistentes
 
         if (vista.pedirConfirmacionInicio()) {
-            jugarPartida();
-            mostrarResultados();
+            // Bucle de partidas hasta que algún jugador alcance el objetivo
+            boolean objetivoAlcanzado = false;
+            while (!objetivoAlcanzado) {
+                // Crear nueva partida reutilizando jugadoresPersistentes
+                partida = Partida.crearConJugadoresExistentes(jugadoresPersistentes);
+                partida.getBaraja().barajar();
+                partida.repartirCartas();
+                llenarMapaJugadores();
+                repartirCartasInicialesMesa();
+
+                jugarPartida();
+
+                vista.mostrarEncabezadoResultados();
+                int[] puntosPartida = partida.mostrarYcalcularPuntos(vista);
+                guardarHistorialPartida(puntosPartida);
+
+                // Comprobar si algún jugador ha alcanzado el objetivo acumulado
+                for (Jugador j : jugadoresPersistentes) {
+                    if (j.getPuntosTotales() >= objetivoPuntos) {
+                        objetivoAlcanzado = true;
+                        break;
+                    }
+                }
+
+                if (!objetivoAlcanzado) {
+                    System.out.println("\nNadie llegó a los " + objetivoPuntos + " puntos.\n");
+                }
+            }
         } else {
             vista.mostrarAdiós();
         }

@@ -8,7 +8,7 @@ public class Main {
         try {
             controlador.iniciarJuego();
         } catch (RuntimeException e) {
-            System.err.println("Se ha producido un error inesperado durante la partida: " + e.getMessage());
+            System.err.println("Se ha producido un error inesperado durante la ejecución del juego: " + e.getMessage());
         } finally {
             vista.cerrar();
         }
