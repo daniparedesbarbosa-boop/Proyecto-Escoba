@@ -4,17 +4,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Mesa {
-    private List<Carta> cartasEnMesa;
+    private final List<Carta> cartasEnMesa;
 
     public Mesa() {
         cartasEnMesa = new ArrayList<>();
     }
 
     public void añadirCarta(Carta carta) {
+        if (carta == null) {
+            throw new ExcepcionPartida("No se puede añadir una carta nula a la mesa");
+        }
         cartasEnMesa.add(carta);
     }
 
     public void retirarCartas(List<Carta> cartas) {
+        if (cartas == null || cartas.isEmpty()) {
+            throw new ExcepcionPartida("La lista de cartas a retirar no puede ser nula o vacía");
+        }
+
+        if (cartas.stream().anyMatch(c -> c == null)) {
+            throw new ExcepcionPartida("La lista de cartas a retirar no puede contener cartas nulas");
+        }
+
         cartasEnMesa.removeAll(cartas);
     }
 
@@ -39,6 +50,10 @@ public class Mesa {
     }
 
     public List<List<Carta>> buscarCombinaciones(Carta cartaJugada) {
+        if (cartaJugada == null) {
+            throw new ExcepcionPartida("La carta jugada no puede ser nula");
+        }
+
         List<List<Carta>> resultado = new ArrayList<>();
         int objetivo = 15 - cartaJugada.getValor();
 

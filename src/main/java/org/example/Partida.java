@@ -4,18 +4,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.ToIntFunction;
 
 public class Partida {
-    private List<Jugador> jugadores;
-    private Baraja baraja;
-    private Mesa mesa;
+    private final List<Jugador> jugadores;
+    private final Baraja baraja;
+    private final Mesa mesa;
     private int turnoActual;
     private Jugador ultimoQueCapturo = null;
     private boolean ultimasCartasMostrado = false;
 
     public Partida(List<String> nombresJugadores) {
         if (nombresJugadores == null || nombresJugadores.isEmpty()) {
-            throw new IllegalArgumentException("Debe haber al menos un jugador");
+            throw new ExcepcionPartida("Debe haber al menos un jugador");
         }
         baraja = new Baraja();
         mesa = new Mesa();
@@ -23,7 +24,7 @@ public class Partida {
 
         for (String nombre : nombresJugadores) {
             if (nombre == null || nombre.trim().isEmpty()) {
-                throw new IllegalArgumentException("El nombre de un jugador no puede estar vacío");
+                throw new ExcepcionPartida("El nombre de un jugador no puede estar vacío");
             }
             jugadores.add(new Jugador(nombre));
         }
@@ -47,11 +48,14 @@ public class Partida {
      */
     public static Partida crearConJugadoresExistentes(List<Jugador> jugadoresExistentes) {
         if (jugadoresExistentes == null || jugadoresExistentes.isEmpty()) {
-            throw new IllegalArgumentException("Debe haber al menos un jugador");
+            throw new ExcepcionPartida("Debe haber al menos un jugador");
         }
         Partida p = new Partida();
         // Reiniciar mano/monton de cada jugador pero conservar sus puntos totales
         for (Jugador j : jugadoresExistentes) {
+            if (j == null) {
+                throw new ExcepcionPartida("La lista de jugadores existentes no puede contener valores nulos");
+            }
             j.reiniciarEstadoPartida();
             p.jugadores.add(j);
         }
@@ -93,6 +97,10 @@ public class Partida {
 
 
     public void repartirCartas() {
+        if (jugadores.isEmpty()) {
+            throw new ExcepcionPartida("No se puede repartir cartas sin jugadores");
+        }
+
         for (Jugador j :  jugadores) {
             for (int i = 0; i < 3; i++) {
                 Carta carta = baraja.repartirCarta();
@@ -104,102 +112,117 @@ public class Partida {
     }
 
     public int[] mostrarYcalcularPuntos(Vista vista) {
-        int maxCartas = -1;
-        int maxOros = -1;
-        int maxSietes = -1;
-        int maxEscobas = -1;
-
-        List<Jugador> ganadoresCartas = new ArrayList<>();
-        List<Jugador> ganadoresOros = new ArrayList<>();
-        List<Jugador> ganadoresSietes = new ArrayList<>();
-        List<Jugador> ganadoresEscobas = new ArrayList<>();
-
-        // Buscar máximos
-        for (Jugador j : jugadores) {
-            MontonJugador m = j.getMonton();
-            int cartas = m.getCartasCapturadas();
-            int oros = m.getOrosCapturados();
-            int sietes = m.getSietes();
-            int escobas = m.getEscobas();
-            if (cartas > maxCartas) maxCartas = cartas;
-            if (oros > maxOros) maxOros = oros;
-            if (sietes > maxSietes) maxSietes = sietes;
-            if (escobas > maxEscobas) maxEscobas = escobas;
-        }
-        // Buscar ganadores (solo si no hay empate)
-        for (Jugador j : jugadores) {
-            MontonJugador m = j.getMonton();
-            if (m.getCartasCapturadas() == maxCartas) ganadoresCartas.add(j);
-            if (m.getOrosCapturados() == maxOros) ganadoresOros.add(j);
-            if (m.getSietes() == maxSietes) ganadoresSietes.add(j);
-            if (m.getEscobas() == maxEscobas && maxEscobas > 0) ganadoresEscobas.add(j);
+        if (vista == null) {
+            throw new ExcepcionPartida("La vista no puede ser nula al calcular los puntos");
         }
 
-        // Si hay empate en cartas, oros o sietes, no hay ganador en esa categoría
-        boolean empateCartas = ganadoresCartas.size() > 1;
-        boolean empateOros = ganadoresOros.size() > 1;
-        boolean empateSietes = ganadoresSietes.size() > 1;
+        List<Jugador> ganadoresCartas = obtenerGanadores(m -> m.getCartasCapturadas());
+        List<Jugador> ganadoresOros = obtenerGanadores(MontonJugador::getOrosCapturados);
+        List<Jugador> ganadoresSietes = obtenerGanadores(MontonJugador::getSietes);
 
-        // Calcular puntos finales de esta partida
+        boolean empateCartas = hayEmpate(ganadoresCartas);
+        boolean empateOros = hayEmpate(ganadoresOros);
+        boolean empateSietes = hayEmpate(ganadoresSietes);
+
         int[] puntos = calcularPuntosTotales(ganadoresCartas, ganadoresOros, ganadoresSietes,
                 empateCartas, empateOros, empateSietes);
 
-        // Acumular los puntos en cada jugador
-        for (int i = 0; i < jugadores.size(); i++) {
-            jugadores.get(i).addPuntosTotales(puntos[i]);
-        }
-
-        // Mostrar tabla (ahora incluye los puntos totales acumulados)
-        vista.mostrarTablaResultados(jugadores, ganadoresCartas, ganadoresOros, ganadoresSietes,
+        actualizarPuntosTotales(puntos);
+        mostrarResultadosRonda(vista, puntos, ganadoresCartas, ganadoresOros, ganadoresSietes,
                 empateCartas, empateOros, empateSietes);
-
-        // Mostrar puntos finales (puntos de la partida)
-        vista.mostrarPuntosFinales(jugadores, puntos);
-
         determinarGanador(vista, puntos);
 
         return puntos;
     }
 
+    private List<Jugador> obtenerGanadores(ToIntFunction<MontonJugador> extractor) {
+        int maximo = calcularMaximo(extractor);
+        List<Jugador> ganadores = new ArrayList<>();
+
+        for (Jugador jugador : jugadores) {
+            if (extractor.applyAsInt(jugador.getMonton()) == maximo) {
+                ganadores.add(jugador);
+            }
+        }
+
+        return ganadores;
+    }
+
+    private int calcularMaximo(ToIntFunction<MontonJugador> extractor) {
+        int maximo = -1;
+        for (Jugador jugador : jugadores) {
+            int valor = extractor.applyAsInt(jugador.getMonton());
+            if (valor > maximo) {
+                maximo = valor;
+            }
+        }
+        return maximo;
+    }
+
+    private boolean hayEmpate(List<Jugador> ganadores) {
+        return ganadores.size() > 1;
+    }
+
+    private void actualizarPuntosTotales(int[] puntos) {
+        for (int i = 0; i < jugadores.size(); i++) {
+            jugadores.get(i).addPuntosTotales(puntos[i]);
+        }
+    }
+
+    private void mostrarResultadosRonda(Vista vista, int[] puntos, List<Jugador> ganadoresCartas,
+                                        List<Jugador> ganadoresOros, List<Jugador> ganadoresSietes,
+                                        boolean empateCartas, boolean empateOros, boolean empateSietes) {
+        vista.mostrarTablaResultados(jugadores, ganadoresCartas, ganadoresOros, ganadoresSietes,
+                empateCartas, empateOros, empateSietes);
+        vista.mostrarPuntosFinales(jugadores, puntos);
+    }
+
     private int[] calcularPuntosTotales(List<Jugador> ganadoresCartas, List<Jugador> ganadoresOros,
                                         List<Jugador> ganadoresSietes, boolean empateCartas,
                                         boolean empateOros, boolean empateSietes) {
-        // Usar Map para mejor legibilidad y mantenibilidad
+        Map<Jugador, Integer> puntosMap = crearMapaPuntosInicial();
+        sumarPuntosPorCategoria(puntosMap, ganadoresCartas, empateCartas);
+        sumarPuntosPorCategoria(puntosMap, ganadoresOros, empateOros);
+        sumarPuntosPorCategoria(puntosMap, ganadoresSietes, empateSietes);
+        sumarPuntosPorEscobas(puntosMap);
+        sumarPuntosPorVelo(puntosMap);
+        return convertirPuntosEnArray(puntosMap);
+    }
+
+    private Map<Jugador, Integer> crearMapaPuntosInicial() {
         Map<Jugador, Integer> puntosMap = new HashMap<>();
-        for (Jugador j : jugadores) {
-            puntosMap.put(j, 0);
+        for (Jugador jugador : jugadores) {
+            puntosMap.put(jugador, 0);
+        }
+        return puntosMap;
+    }
+
+    private void sumarPuntosPorCategoria(Map<Jugador, Integer> puntosMap, List<Jugador> ganadores,
+                                         boolean hayEmpate) {
+        if (hayEmpate) {
+            return;
         }
 
-        // Cartas
-        if (!empateCartas) {
-            for (Jugador ganador : ganadoresCartas) {
-                puntosMap.put(ganador, puntosMap.get(ganador) + 1);
-            }
+        for (Jugador ganador : ganadores) {
+            puntosMap.put(ganador, puntosMap.get(ganador) + 1);
         }
-        // Oros
-        if (!empateOros) {
-            for (Jugador ganador : ganadoresOros) {
-                puntosMap.put(ganador, puntosMap.get(ganador) + 1);
-            }
-        }
-        // Sietes
-        if (!empateSietes) {
-            for (Jugador ganador : ganadoresSietes) {
-                puntosMap.put(ganador, puntosMap.get(ganador) + 1);
-            }
-        }
-        // Escobas
-        for (Jugador j : jugadores) {
-            puntosMap.put(j, puntosMap.get(j) + j.getMonton().getEscobas());
-        }
-        // Velo
-        for (Jugador j : jugadores) {
-            if (j.getMonton().getVelo()) {
-                puntosMap.put(j, puntosMap.get(j) + 1);
-            }
-        }
+    }
 
-        // Convertir Map a array para mantener compatibilidad
+    private void sumarPuntosPorEscobas(Map<Jugador, Integer> puntosMap) {
+        for (Jugador jugador : jugadores) {
+            puntosMap.put(jugador, puntosMap.get(jugador) + jugador.getMonton().getEscobas());
+        }
+    }
+
+    private void sumarPuntosPorVelo(Map<Jugador, Integer> puntosMap) {
+        for (Jugador jugador : jugadores) {
+            if (jugador.getMonton().getVelo()) {
+                puntosMap.put(jugador, puntosMap.get(jugador) + 1);
+            }
+        }
+    }
+
+    private int[] convertirPuntosEnArray(Map<Jugador, Integer> puntosMap) {
         int[] puntos = new int[jugadores.size()];
         for (int i = 0; i < jugadores.size(); i++) {
             puntos[i] = puntosMap.get(jugadores.get(i));
@@ -252,6 +275,10 @@ public class Partida {
     }
 
     public List<Carta> seleccionarMejorCombinacion(List<List<Carta>> combinaciones) {
+        if (combinaciones == null || combinaciones.isEmpty()) {
+            throw new ExcepcionPartida("No se pueden seleccionar combinaciones vacías");
+        }
+
         List<Carta> mejorCombinacion = null;
         int mejorPuntaje = -1;
 
@@ -269,6 +296,10 @@ public class Partida {
     }
 
     private static int calcularPuntajeCombinacion(List<Carta> combinacion) {
+        if (combinacion == null || combinacion.isEmpty()) {
+            throw new ExcepcionPartida("La combinación no puede ser nula o vacía");
+        }
+
         int puntaje = 0;
 
         // Prioridad 1: Cartas de oros (+1000 puntos si contiene al menos una carta de oros)
@@ -299,6 +330,10 @@ public class Partida {
     }
 
     public int elegirMejorCartaCPU(List<Carta> mano) {
+        if (mano == null || mano.isEmpty()) {
+            throw new ExcepcionPartida("La mano de la CPU no puede ser nula o vacía");
+        }
+
         int mejorIndice = 0; // Por defecto, la primera carta
         int mejorPuntaje = Integer.MIN_VALUE;
 

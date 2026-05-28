@@ -2,6 +2,7 @@ package org.example;
 
 import java.util.List;
 import java.util.InputMismatchException;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 public class Vista {
@@ -22,7 +23,7 @@ public class Vista {
 
     public String pedirNombre() {
         System.out.print("Inserta tu nombre: ");
-        String nombre = scanner.nextLine().trim();
+        String nombre = leerLineaSegura("No se pudo leer el nombre del jugador").trim();
         return nombre.isEmpty() ? "Jugador" : nombre;
     }
 
@@ -57,16 +58,23 @@ public class Vista {
             System.out.println("Introduce un número válido");
             scanner.nextLine();
             return -1;
-        } catch (IllegalStateException e) {
-            System.out.println("No se pudo leer la entrada");
-            return -1;
+        } catch (NoSuchElementException | IllegalStateException e) {
+            throw new ExcepcionPartida("No se pudo leer una respuesta numérica", e);
+        }
+    }
+
+    private String leerLineaSegura(String mensajeError) {
+        try {
+            return scanner.nextLine();
+        } catch (NoSuchElementException | IllegalStateException e) {
+            throw new ExcepcionPartida(mensajeError, e);
         }
     }
 
     public void mostrarConfiguracion(String nombreJugador, List<String> rivales) {
         System.out.println();
         System.out.println("╔═══════════════════════════════════════╗");
-        System.out.println("║           EMPIEZA LA PARTIDA          ║");
+        System.out.println("║          ¡EMPIEZA LA PARTIDA!         ║");
         System.out.println("╚═══════════════════════════════════════╝");
         System.out.println();
         StringBuilder sb = new StringBuilder();
@@ -83,7 +91,7 @@ public class Vista {
 
     public boolean pedirConfirmacionInicio() {
         System.out.print("¿Comenzamos? (S/N): ");
-        String respuesta = scanner.nextLine().trim();
+        String respuesta = leerLineaSegura("No se pudo leer la confirmación de inicio").trim();
         return respuesta.equalsIgnoreCase("S");
     }
 
@@ -156,9 +164,8 @@ public class Vista {
             System.out.println("Introduce un número válido");
             scanner.nextLine();
             return -1;
-        } catch (IllegalStateException e) {
-            System.out.println("No se pudo leer la entrada");
-            return -1;
+        } catch (NoSuchElementException | IllegalStateException e) {
+            throw new ExcepcionPartida("No se pudo leer la selección de carta", e);
         }
     }
 
@@ -191,6 +198,14 @@ public class Vista {
         System.out.println("No se hizo combinación");
     }
 
+    public void mostrarAviso(String mensaje) {
+        System.out.println("Aviso: " + mensaje);
+    }
+
+    public void mostrarError(String mensaje) {
+        System.err.println("Error: " + mensaje);
+    }
+
     public void mostrarCartasFinales(String nombreJugador, List<Carta> cartas) {
         StringBuilder sb = new StringBuilder();
         sb.append("Cartas finales en la mesa asignadas a ").append(nombreJugador).append(": ");
@@ -212,7 +227,7 @@ public class Vista {
     public void mostrarEncabezadoResultados() {
         System.out.println();
         System.out.println("╔═══════════════════════════════════════╗");
-        System.out.println("║           FIN DE LA RONDA             ║");
+        System.out.println("║            FIN DE LA RONDA            ║");
         System.out.println("╚═══════════════════════════════════════╝");
         System.out.println();
     }

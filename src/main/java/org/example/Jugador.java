@@ -3,14 +3,14 @@ package org.example;
 import java.util.*;
 
 public class Jugador {
-    private String nombre;
-    private List<Carta> mano;
-    private MontonJugador monton;
+    private final String nombre;
+    private final List<Carta> mano;
+    private final MontonJugador monton;
     private int puntosTotales = 0; // Puntos acumulados a lo largo de varias partidas
 
     public Jugador(String nombre) {
         if (nombre == null || nombre.trim().isEmpty()) {
-            throw new IllegalArgumentException("El nombre del jugador no puede estar vacío");
+            throw new ExcepcionPartida("El nombre del jugador no puede estar vacío");
         }
         this.nombre = nombre;
         this.mano = new ArrayList<>();
@@ -22,7 +22,7 @@ public class Jugador {
     }
 
     public List<Carta> getMano() {
-        return mano;
+        return new ArrayList<>(mano);
     }
 
     public MontonJugador getMonton() {
@@ -30,12 +30,15 @@ public class Jugador {
     }
 
     public void recibirCarta(Carta c) {
+        if (c == null) {
+            throw new ExcepcionPartida("No se puede recibir una carta nula");
+        }
         mano.add(c);
     }
 
     public Carta jugarCarta(int indice) {
         if (indice < 0 || indice >= mano.size()) {
-            throw new IllegalArgumentException("Índice de carta fuera de rango: " + indice);
+            throw new ExcepcionPartida("Índice de carta fuera de rango: " + indice);
         }
         return mano.remove(indice);
     }
@@ -53,8 +56,8 @@ public class Jugador {
      * pero mantiene los puntos totales acumulados.
      */
     public void reiniciarEstadoPartida() {
-        this.mano = new ArrayList<>();
-        this.monton = new MontonJugador();
+        mano.clear();
+        monton.reiniciar();
     }
 
     public int getPuntosTotales() {
@@ -62,7 +65,9 @@ public class Jugador {
     }
 
     public void addPuntosTotales(int puntos) {
-        if (puntos < 0) return;
+        if (puntos < 0) {
+            throw new ExcepcionPartida("No se pueden añadir puntos negativos: " + puntos);
+        }
         this.puntosTotales += puntos;
     }
 }

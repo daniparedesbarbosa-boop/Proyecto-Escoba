@@ -1,12 +1,11 @@
 package org.example;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 public class Baraja {
-    private List<Carta> mazo;
+    private final List<Carta> mazo;
 
     public Baraja() {
         mazo = new ArrayList<>();
@@ -23,7 +22,7 @@ public class Baraja {
 
     private void crearCartasDelPalo(char palo) {
         for (int numero = 1; numero <= 10; numero++) {
-            mazo.add(new Carta(numero, palo, numero));
+            mazo.add(Carta.crearEspanola(numero, palo));
         }
     }
 

@@ -6,14 +6,36 @@ public class Carta {
     public static final char ESPADAS = 'E';
     public static final char BASTOS = 'B';
 
-    private int numero;
-    private char palo;
-    private int valor;
+    private final int numero;
+    private final char palo;
+    private final int valor;
 
     public Carta(int numero, char palo, int valor) {
         this.numero = numero;
         this.palo = palo;
         this.valor = valor;
+    }
+
+    public static Carta crearEspanola(int numero, char palo) {
+        validarNumero(numero);
+        validarPalo(palo);
+        return new Carta(numero, palo, valorCarta(numero));
+    }
+
+    private static void validarNumero(int numero) {
+        if (numero < 1 || numero > 10) {
+            throw new ExcepcionPartida("El número de carta debe estar entre 1 y 10: " + numero);
+        }
+    }
+
+    private static void validarPalo(char palo) {
+        if (palo != OROS && palo != COPAS && palo != ESPADAS && palo != BASTOS) {
+            throw new ExcepcionPartida("Palo de carta no válido: " + palo);
+        }
+    }
+
+    private static int valorCarta(int numero) {
+        return numero <= 7 ? numero : numero - 2;
     }
 
     public int getNumero() {

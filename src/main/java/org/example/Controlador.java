@@ -6,13 +6,13 @@ import java.util.List;
 import java.util.Map;
 
 public class Controlador {
-    private Vista vista;
+    private final Vista vista;
     private Partida partida;
-    private List<String> nombresJugadores;
+    private final List<String> nombresJugadores;
     private String nombreJugador;
-    private Map<String, Jugador> mapajugadores;
-    private GestorArchivos gestorArchivos;
-    private List<Jugador> jugadoresPersistentes;
+    private final Map<String, Jugador> mapajugadores;
+    private final GestorArchivos gestorArchivos;
+    private final List<Jugador> jugadoresPersistentes;
     private int objetivoPuntos = 31; // por defecto
 
     public Controlador(Vista vista) {
@@ -20,82 +20,92 @@ public class Controlador {
             throw new IllegalArgumentException("La vista no puede ser nula");
         }
         this.vista = vista;
+        this.nombresJugadores = new ArrayList<>();
         this.mapajugadores = new HashMap<>();
         this.gestorArchivos = new GestorArchivos();
+        this.jugadoresPersistentes = new ArrayList<>();
     }
 
     public void iniciarJuego() {
         vista.mostrarBienvenida();
         configurarJugadores();
-        // Preguntar objetivo (21 o 31)
         objetivoPuntos = vista.pedirObjetivoPuntos();
 
-        // Crear instancias persistentes de Jugador para acumular puntos entre partidas
-        jugadoresPersistentes = new ArrayList<>();
-        for (String nombre : nombresJugadores) {
-            Jugador j = new Jugador(nombre);
-            jugadoresPersistentes.add(j);
-            mapajugadores.put(j.getNombre(), j);
-        }
-        // La partida se inicializa dentro del bucle principal para reutilizar jugadoresPersistentes
+        prepararJugadoresPersistentes();
 
         if (vista.pedirConfirmacionInicio()) {
-            // Bucle de partidas hasta que algún jugador alcance el objetivo
-            boolean objetivoAlcanzado = false;
-            while (!objetivoAlcanzado) {
-                // Crear nueva partida reutilizando jugadoresPersistentes
-                partida = Partida.crearConJugadoresExistentes(jugadoresPersistentes);
-                partida.getBaraja().barajar();
-                partida.repartirCartas();
-                llenarMapaJugadores();
-                repartirCartasInicialesMesa();
-
-                jugarPartida();
-
-                vista.mostrarEncabezadoResultados();
-                int[] puntosPartida = partida.mostrarYcalcularPuntos(vista);
-                guardarHistorialPartida(puntosPartida);
-
-                // Comprobar si algún jugador ha alcanzado el objetivo acumulado
-                for (Jugador j : jugadoresPersistentes) {
-                    if (j.getPuntosTotales() >= objetivoPuntos) {
-                        objetivoAlcanzado = true;
-                        break;
-                    }
-                }
-
-                if (!objetivoAlcanzado) {
-                    System.out.println("\nNadie llegó a los " + objetivoPuntos + " puntos.\n");
-                }
-            }
+            ejecutarPartidasHastaObjetivo();
         } else {
             vista.mostrarAdiós();
         }
     }
 
+    private void prepararJugadoresPersistentes() {
+        jugadoresPersistentes.clear();
+        mapajugadores.clear();
+
+        for (String nombre : nombresJugadores) {
+            Jugador jugador = new Jugador(nombre);
+            jugadoresPersistentes.add(jugador);
+            mapajugadores.put(jugador.getNombre(), jugador);
+        }
+    }
+
+    private void ejecutarPartidasHastaObjetivo() {
+        boolean objetivoAlcanzado = false;
+
+        while (!objetivoAlcanzado) {
+            iniciarNuevaRonda();
+            int[] puntosPartida = resolverRondaActual();
+            objetivoAlcanzado = guardarResultadosYComprobarObjetivo(puntosPartida);
+        }
+    }
+
+    private void iniciarNuevaRonda() {
+        partida = Partida.crearConJugadoresExistentes(jugadoresPersistentes);
+        partida.getBaraja().barajar();
+        partida.repartirCartas();
+        repartirCartasInicialesMesa();
+    }
+
+    private int[] resolverRondaActual() {
+        jugarPartida();
+        vista.mostrarEncabezadoResultados();
+        return partida.mostrarYcalcularPuntos(vista);
+    }
+
+    private boolean guardarResultadosYComprobarObjetivo(int[] puntosPartida) {
+        try {
+            guardarHistorialPartida(puntosPartida);
+        } catch (ExcepcionPersistenciaHistorial e) {
+            vista.mostrarAviso("No se pudo guardar el historial de esta ronda: " + e.getMessage());
+        }
+
+        boolean objetivoAlcanzado = seAlcanzoObjetivo();
+        if (!objetivoAlcanzado) {
+            vista.mostrarAviso("Nadie llegó a los " + objetivoPuntos + " puntos todavía.");
+        }
+        return objetivoAlcanzado;
+    }
+
+    private boolean seAlcanzoObjetivo() {
+        for (Jugador jugador : jugadoresPersistentes) {
+            if (jugador.getPuntosTotales() >= objetivoPuntos) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void configurarJugadores() {
         nombreJugador = vista.pedirNombre();
         int numCPUs = vista.pedirNumeroRivales();
-        nombresJugadores = construirNombresJugadores(nombreJugador, numCPUs);
+        nombresJugadores.clear();
+        nombresJugadores.addAll(construirNombresJugadores(nombreJugador, numCPUs));
 
         List<String> rivales = new ArrayList<>(nombresJugadores);
         rivales.remove(0);
         vista.mostrarConfiguracion(nombreJugador, rivales);
-    }
-
-    private void inicializarPartida() {
-        partida = new Partida(nombresJugadores);
-        partida.getBaraja().barajar();
-        partida.repartirCartas();
-        llenarMapaJugadores();
-        repartirCartasInicialesMesa();
-    }
-
-    private void llenarMapaJugadores() {
-        // Mapear nombres a jugadores para búsquedas rápidas
-        for (Jugador j : partida.getJugadores()) {
-            mapajugadores.put(j.getNombre(), j);
-        }
     }
 
     private void repartirCartasInicialesMesa() {
@@ -222,11 +232,6 @@ public class Controlador {
         return jugador.getNombre().startsWith("CPU");
     }
 
-    private void mostrarResultados() {
-        vista.mostrarEncabezadoResultados();
-        int[] puntos = partida.mostrarYcalcularPuntos(vista);
-        guardarHistorialPartida(puntos);
-    }
 
     private void guardarHistorialPartida(int[] puntos) {
         String ganador = obtenerNombreGanador(puntos);

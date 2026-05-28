@@ -20,11 +20,11 @@ public class GestorArchivos {
 
     public void guardarHistorialPartida(List<Jugador> jugadores, int[] puntos, String ganador) {
         if (jugadores == null || puntos == null) {
-            throw new IllegalArgumentException("Los datos de la partida no pueden ser nulos");
+            throw new ExcepcionPersistenciaHistorial("Los datos de la partida no pueden ser nulos");
         }
 
         if (jugadores.size() != puntos.length) {
-            throw new IllegalArgumentException("El número de jugadores y de puntuaciones debe coincidir");
+            throw new ExcepcionPersistenciaHistorial("El número de jugadores y de puntuaciones debe coincidir");
         }
 
         Path ruta = resolverRutaHistorial();
@@ -37,7 +37,7 @@ public class GestorArchivos {
                 necesitaCabecera = tamano == 0;
                 separarPartidas = tamano > 0;
             } catch (IOException e) {
-                necesitaCabecera = true;
+                throw new ExcepcionPersistenciaHistorial("No se pudo inspeccionar el historial existente", e);
             }
         }
 
@@ -81,9 +81,9 @@ public class GestorArchivos {
                 }
             }
         } catch (IOException e) {
-            System.err.println("No se pudo guardar el historial de la partida: " + e.getMessage());
+            throw new ExcepcionPersistenciaHistorial("No se pudo guardar el historial de la partida", e);
         } catch (SecurityException e) {
-            System.err.println("No hay permisos para escribir el historial de la partida: " + e.getMessage());
+            throw new ExcepcionPersistenciaHistorial("No hay permisos para escribir el historial de la partida", e);
         }
     }
 
@@ -101,9 +101,9 @@ public class GestorArchivos {
                 lineas.add(linea);
             }
         } catch (IOException e) {
-            System.err.println("No se pudo leer el historial de la partida: " + e.getMessage());
+            throw new ExcepcionPersistenciaHistorial("No se pudo leer el historial de la partida", e);
         } catch (SecurityException e) {
-            System.err.println("No hay permisos para leer el historial de la partida: " + e.getMessage());
+            throw new ExcepcionPersistenciaHistorial("No hay permisos para leer el historial de la partida", e);
         }
 
         return lineas;
