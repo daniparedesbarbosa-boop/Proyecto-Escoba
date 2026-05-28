@@ -1,25 +1,27 @@
 package org.example;
 
 public class Carta {
-    public static final char OROS = 'O';
-    public static final char COPAS = 'C';
-    public static final char ESPADAS = 'E';
-    public static final char BASTOS = 'B';
-
     private final int numero;
-    private final char palo;
+    private final Palo palo;
     private final int valor;
 
-    public Carta(int numero, char palo, int valor) {
+    public Carta(int numero, Palo palo, int valor) {
         this.numero = numero;
+        if (palo == null) {
+            throw new ExcepcionPartida("El palo de la carta no puede ser nulo");
+        }
         this.palo = palo;
         this.valor = valor;
     }
 
-    public static Carta crearEspanola(int numero, char palo) {
+    public static Carta crearEspanola(int numero, Palo palo) {
         validarNumero(numero);
         validarPalo(palo);
         return new Carta(numero, palo, valorCarta(numero));
+    }
+
+    public static Carta crearEspanola(int numero, char codigoPalo) {
+        return crearEspanola(numero, Palo.fromCodigo(codigoPalo));
     }
 
     private static void validarNumero(int numero) {
@@ -28,9 +30,9 @@ public class Carta {
         }
     }
 
-    private static void validarPalo(char palo) {
-        if (palo != OROS && palo != COPAS && palo != ESPADAS && palo != BASTOS) {
-            throw new ExcepcionPartida("Palo de carta no válido: " + palo);
+    private static void validarPalo(Palo palo) {
+        if (palo == null) {
+            throw new ExcepcionPartida("El palo de la carta no puede ser nulo");
         }
     }
 
@@ -42,22 +44,12 @@ public class Carta {
         return numero;
     }
 
-    public char getPalo() {
+    public Palo getPalo() {
         return palo;
     }
 
     public int getValor() {
         return valor;
-    }
-
-    private static String emojiPalo(char palo) {
-        switch (palo) {
-            case OROS: return "\uD83E\uDE99"; // 🪙
-            case COPAS: return "\uD83C\uDF77"; // 🍷
-            case ESPADAS: return "\u2694\uFE0F"; // ⚔️
-            case BASTOS: return "\uD83E\uDEB5"; // 🪵
-            default: return "?";
-        }
     }
 
     private static String displayNumero(int numero) {
@@ -73,7 +65,7 @@ public class Carta {
     public String toString() {
         String nombreCarta = displayNumero(numero);
         StringBuilder sb = new StringBuilder();
-        sb.append(nombreCarta).append(" ").append(emojiPalo(palo));
+        sb.append(nombreCarta).append(" ").append(palo.getEmoji());
         return sb.toString();
     }
 }

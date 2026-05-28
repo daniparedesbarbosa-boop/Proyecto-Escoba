@@ -9,7 +9,7 @@ public class Controlador {
     private final List<String> nombresJugadores;
     private String nombreJugador;
     private final GestorArchivos gestorArchivos;
-    private final List<Jugador> jugadoresPersistentes;
+    private final List<Participante> jugadoresPersistentes;
     private int objetivoPuntos = 31; // por defecto
 
     public Controlador(VistaJuego vista) {
@@ -39,9 +39,14 @@ public class Controlador {
     private void prepararJugadoresPersistentes() {
         jugadoresPersistentes.clear();
 
+        // El primer jugador es siempre humano
+        jugadoresPersistentes.add(new JugadorHumano(nombreJugador));
+
+        // El resto son CPUs
         for (String nombre : nombresJugadores) {
-            Jugador jugador = new Jugador(nombre);
-            jugadoresPersistentes.add(jugador);
+            if (!nombre.equals(nombreJugador)) {
+                jugadoresPersistentes.add(new JugadorCPU(nombre));
+            }
         }
     }
 
@@ -56,7 +61,7 @@ public class Controlador {
     }
 
     private void iniciarNuevaRonda() {
-        partida = Partida.crearConJugadoresExistentes(jugadoresPersistentes);
+        partida = new Partida(jugadoresPersistentes);
         partida.getBaraja().barajar();
         partida.repartirCartas();
         repartirCartasInicialesMesa();
@@ -84,7 +89,7 @@ public class Controlador {
     }
 
     private boolean seAlcanzoObjetivo() {
-        for (Jugador jugador : jugadoresPersistentes) {
+        for (Participante jugador : jugadoresPersistentes) {
             if (jugador.getPuntosTotales() >= objetivoPuntos) {
                 return true;
             }
@@ -129,7 +134,7 @@ public class Controlador {
             repartirCartasSiProcede();
             mostrarEstadoJuego();
 
-            Jugador jugador = partida.jugadorActual();
+            Participante jugador = partida.jugadorActual();
             int cartaElegida = elegirCartaJugador(jugador);
             jugarTurno(cartaElegida);
         }
@@ -156,7 +161,7 @@ public class Controlador {
 
         mostrarUltimasCartasSiProcede();
 
-        Jugador jugador = partida.jugadorActual();
+        Participante jugador = partida.jugadorActual();
         vista.mostrarTurnoJugador(jugador.getNombre());
     }
 
@@ -167,24 +172,16 @@ public class Controlador {
         }
     }
 
-    private int elegirCartaJugador(Jugador jugador) {
-        List<Carta> mano = jugador.getMano();
-
-        if (mano.isEmpty()) {
+    private int elegirCartaJugador(Participante jugador) {
+        if (!jugador.tieneCartas()) {
             throw new IllegalStateException(construirMensajeSinCartas(jugador.getNombre()));
         }
-
-        // Si es una CPU, elegir automáticamente
-        if (esCPU(jugador)) {
-            return partida.elegirMejorCartaCPU(mano);
-        }
-
-        // Si es el jugador humano, pedir input
-        return vista.elegirCartaJugador(mano);
+        // ¡Polimorfismo en acción! No más if/else para CPU vs Humano.
+        return jugador.elegirIndiceCarta(partida, vista);
     }
 
     private void jugarTurno(int indiceCarta) {
-        Jugador jugador = partida.jugadorActual();
+        Participante jugador = partida.jugadorActual();
         Carta jugada = jugador.jugarCarta(indiceCarta);
         vista.mostrarJugadaJugador(jugador.getNombre(), jugada);
 
@@ -199,7 +196,7 @@ public class Controlador {
         partida.siguienteTurno();
     }
 
-    private void procesarCaptura(Jugador jugador, Carta jugada, List<List<Carta>> combinaciones) {
+    private void procesarCaptura(Participante jugador, Carta jugada, List<List<Carta>> combinaciones) {
         List<Carta> mejorCombinacion = partida.seleccionarMejorCombinacion(combinaciones);
         partida.getMesa().retirarCartas(mejorCombinacion);
         mejorCombinacion.add(jugada);
@@ -221,12 +218,6 @@ public class Controlador {
         partida.getMesa().añadirCarta(jugada);
         vista.mostrarSinCombinacion();
     }
-
-
-    private boolean esCPU(Jugador jugador) {
-        return jugador.getNombre().startsWith("CPU");
-    }
-
 
     private void guardarHistorialPartida(ResultadoRonda resultado) {
         gestorArchivos.guardarHistorialPartida(resultado.getJugadores(), resultado.getPuntos(),
@@ -251,4 +242,3 @@ public class Controlador {
         return sb.toString();
     }
 }
-

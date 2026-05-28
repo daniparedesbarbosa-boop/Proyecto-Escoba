@@ -13,14 +13,12 @@ public class Baraja {
     }
 
     private void inicializarBaraja() {
-        char[] palos = { Carta.OROS, Carta.COPAS, Carta.ESPADAS, Carta.BASTOS };
-
-        for (char palo : palos) {
+        for (Palo palo : Palo.values()) {
             crearCartasDelPalo(palo);
         }
     }
 
-    private void crearCartasDelPalo(char palo) {
+    private void crearCartasDelPalo(Palo palo) {
         for (int numero = 1; numero <= 10; numero++) {
             mazo.add(Carta.crearEspanola(numero, palo));
         }

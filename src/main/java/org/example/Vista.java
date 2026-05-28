@@ -250,8 +250,8 @@ public class Vista implements VistaJuego {
         System.out.println();
     }
 
-    public void mostrarTablaResultados(List<Jugador> jugadores, List<Jugador> ganadoresCartas,
-                                       List<Jugador> ganadoresOros, List<Jugador> ganadoresSietes,
+    public void mostrarTablaResultados(List<Participante> jugadores, List<Participante> ganadoresCartas,
+                                       List<Participante> ganadoresOros, List<Participante> ganadoresSietes,
                                        boolean empateCartas, boolean empateOros, boolean empateSietes) {
         System.out.println("\nPuntos:");
         // Añadimos columna Total para mostrar puntos acumulados
@@ -260,7 +260,7 @@ public class Vista implements VistaJuego {
 
         imprimirEncabezadoTabla(separador, formato);
 
-        for (Jugador j : jugadores) {
+        for (Participante j : jugadores) {
             imprimirFilaJugador(j, formato, ganadoresCartas, ganadoresOros, ganadoresSietes,
                                empateCartas, empateOros, empateSietes);
         }
@@ -275,8 +275,8 @@ public class Vista implements VistaJuego {
         System.out.println(separador);
     }
 
-    private void imprimirFilaJugador(Jugador j, String formato, List<Jugador> ganadoresCartas,
-                                     List<Jugador> ganadoresOros, List<Jugador> ganadoresSietes,
+    private void imprimirFilaJugador(Participante j, String formato, List<Participante> ganadoresCartas,
+                                     List<Participante> ganadoresOros, List<Participante> ganadoresSietes,
                                      boolean empateCartas, boolean empateOros, boolean empateSietes) {
         MontonJugador m = j.getMonton();
         String nombre = j.getNombre();
@@ -300,7 +300,7 @@ public class Vista implements VistaJuego {
         return sb.toString();
     }
 
-    public void mostrarPuntosFinales(List<Jugador> jugadores, int[] puntos) {
+    public void mostrarPuntosFinales(List<Participante> jugadores, int[] puntos) {
         System.out.println("\nPuntos de la ronda:");
         for (int i = 0; i < jugadores.size(); i++) {
             StringBuilder sb = new StringBuilder();
@@ -311,10 +311,10 @@ public class Vista implements VistaJuego {
 
         // Mostrar puntos totales acumulados hasta ahora (sumatoria de rondas anteriores + ronda actual)
         System.out.println("\nPuntos totales:");
-        for (Jugador j : jugadores) {
+        for (Participante j : jugadores) {
             StringBuilder sb = new StringBuilder();
             sb.append(j.getNombre()).append(": ").append(j.getPuntosTotales())
-              .append(" punto").append(j.getPuntosTotales() == 1 ? "" : "s");
+               .append(" punto").append(j.getPuntosTotales() == 1 ? "" : "s");
             System.out.println(sb.toString());
         }
     }
@@ -348,4 +348,3 @@ public class Vista implements VistaJuego {
         scanner.close();
     }
 }
-

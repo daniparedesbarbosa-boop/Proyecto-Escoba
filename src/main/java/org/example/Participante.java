@@ -1,20 +1,22 @@
 package org.example;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class Jugador {
+public abstract class Participante {
     private final String nombre;
     private final List<Carta> mano;
     private final MontonJugador monton;
-    private int puntosTotales = 0; // Puntos acumulados a lo largo de varias partidas
+    private int puntosTotales;
 
-    public Jugador(String nombre) {
+    protected Participante(String nombre) {
         if (nombre == null || nombre.trim().isEmpty()) {
-            throw new ExcepcionPartida("El nombre del jugador no puede estar vacío");
+            throw new ExcepcionPartida("El nombre del participante no puede estar vacío");
         }
         this.nombre = nombre;
         this.mano = new ArrayList<>();
         this.monton = new MontonJugador();
+        this.puntosTotales = 0;
     }
 
     public String getNombre() {
@@ -29,11 +31,11 @@ public class Jugador {
         return monton;
     }
 
-    public void recibirCarta(Carta c) {
-        if (c == null) {
+    public void recibirCarta(Carta carta) {
+        if (carta == null) {
             throw new ExcepcionPartida("No se puede recibir una carta nula");
         }
-        mano.add(c);
+        mano.add(carta);
     }
 
     public Carta jugarCarta(int indice) {
@@ -51,10 +53,6 @@ public class Jugador {
         return mano.size();
     }
 
-    /**
-     * Reinicia el estado del jugador para una nueva partida (limpia mano y montón),
-     * pero mantiene los puntos totales acumulados.
-     */
     public void reiniciarEstadoPartida() {
         mano.clear();
         monton.reiniciar();
@@ -68,6 +66,8 @@ public class Jugador {
         if (puntos < 0) {
             throw new ExcepcionPartida("No se pueden añadir puntos negativos: " + puntos);
         }
-        this.puntosTotales += puntos;
+        puntosTotales += puntos;
     }
+
+    public abstract int elegirIndiceCarta(Partida partida, VistaJuego vista);
 }

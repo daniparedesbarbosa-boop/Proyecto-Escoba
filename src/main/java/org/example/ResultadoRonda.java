@@ -3,11 +3,11 @@ package org.example;
 import java.util.List;
 
 public class ResultadoRonda {
-    private final List<Jugador> jugadores;
+    private final List<Participante> jugadores;
     private final int[] puntos;
-    private final List<Jugador> ganadoresCartas;
-    private final List<Jugador> ganadoresOros;
-    private final List<Jugador> ganadoresSietes;
+    private final List<Participante> ganadoresCartas;
+    private final List<Participante> ganadoresOros;
+    private final List<Participante> ganadoresSietes;
     private final boolean empateCartas;
     private final boolean empateOros;
     private final boolean empateSietes;
@@ -15,11 +15,11 @@ public class ResultadoRonda {
     private final boolean ganadorEsJugador;
     private final boolean empateFinal;
 
-    public ResultadoRonda(List<Jugador> jugadores,
+    public ResultadoRonda(List<Participante> jugadores,
                           int[] puntos,
-                          List<Jugador> ganadoresCartas,
-                          List<Jugador> ganadoresOros,
-                          List<Jugador> ganadoresSietes,
+                          List<Participante> ganadoresCartas,
+                          List<Participante> ganadoresOros,
+                          List<Participante> ganadoresSietes,
                           boolean empateCartas,
                           boolean empateOros,
                           boolean empateSietes,
@@ -44,7 +44,7 @@ public class ResultadoRonda {
         this.empateFinal = empateFinal;
     }
 
-    public List<Jugador> getJugadores() {
+    public List<Participante> getJugadores() {
         return jugadores;
     }
 
@@ -52,15 +52,15 @@ public class ResultadoRonda {
         return puntos.clone();
     }
 
-    public List<Jugador> getGanadoresCartas() {
+    public List<Participante> getGanadoresCartas() {
         return ganadoresCartas;
     }
 
-    public List<Jugador> getGanadoresOros() {
+    public List<Participante> getGanadoresOros() {
         return ganadoresOros;
     }
 
-    public List<Jugador> getGanadoresSietes() {
+    public List<Participante> getGanadoresSietes() {
         return ganadoresSietes;
     }
 
@@ -88,4 +88,3 @@ public class ResultadoRonda {
         return empateFinal;
     }
 }
-
