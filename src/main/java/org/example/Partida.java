@@ -111,10 +111,7 @@ public class Partida {
         }
     }
 
-    public int[] mostrarYcalcularPuntos(Vista vista) {
-        if (vista == null) {
-            throw new ExcepcionPartida("La vista no puede ser nula al calcular los puntos");
-        }
+    public ResultadoRonda calcularResultadoRonda() {
 
         List<Jugador> ganadoresCartas = obtenerGanadores(m -> m.getCartasCapturadas());
         List<Jugador> ganadoresOros = obtenerGanadores(MontonJugador::getOrosCapturados);
@@ -128,11 +125,8 @@ public class Partida {
                 empateCartas, empateOros, empateSietes);
 
         actualizarPuntosTotales(puntos);
-        mostrarResultadosRonda(vista, puntos, ganadoresCartas, ganadoresOros, ganadoresSietes,
+        return construirResultadoRonda(puntos, ganadoresCartas, ganadoresOros, ganadoresSietes,
                 empateCartas, empateOros, empateSietes);
-        determinarGanador(vista, puntos);
-
-        return puntos;
     }
 
     private List<Jugador> obtenerGanadores(ToIntFunction<MontonJugador> extractor) {
@@ -169,12 +163,17 @@ public class Partida {
         }
     }
 
-    private void mostrarResultadosRonda(Vista vista, int[] puntos, List<Jugador> ganadoresCartas,
-                                        List<Jugador> ganadoresOros, List<Jugador> ganadoresSietes,
-                                        boolean empateCartas, boolean empateOros, boolean empateSietes) {
-        vista.mostrarTablaResultados(jugadores, ganadoresCartas, ganadoresOros, ganadoresSietes,
-                empateCartas, empateOros, empateSietes);
-        vista.mostrarPuntosFinales(jugadores, puntos);
+    private ResultadoRonda construirResultadoRonda(int[] puntos, List<Jugador> ganadoresCartas,
+                                                   List<Jugador> ganadoresOros,
+                                                   List<Jugador> ganadoresSietes,
+                                                   boolean empateCartas, boolean empateOros,
+                                                   boolean empateSietes) {
+        String ganadorNombre = determinarGanadorNombre(puntos);
+        boolean empateFinal = ganadorNombre == null;
+        boolean ganadorEsJugador = ganadorNombre != null && !ganadorNombre.startsWith("CPU");
+
+        return new ResultadoRonda(jugadores, puntos, ganadoresCartas, ganadoresOros, ganadoresSietes,
+                empateCartas, empateOros, empateSietes, ganadorNombre, ganadorEsJugador, empateFinal);
     }
 
     private int[] calcularPuntosTotales(List<Jugador> ganadoresCartas, List<Jugador> ganadoresOros,
@@ -231,7 +230,7 @@ public class Partida {
         return puntos;
     }
 
-    private void determinarGanador(Vista vista, int[] puntos) {
+    private String determinarGanadorNombre(int[] puntos) {
         int maxPuntos = -1;
         List<Integer> indicesGanadores = new ArrayList<>();
         for (int i = 0; i < jugadores.size(); i++) {
@@ -244,14 +243,11 @@ public class Partida {
             }
         }
 
-        // Mensaje de ganador
         if (indicesGanadores.size() == 1) {
-            String ganador = jugadores.get(indicesGanadores.get(0)).getNombre();
-            boolean esJugador = !ganador.startsWith("CPU");
-            vista.mostrarGanador(ganador, esJugador);
-        } else {
-            vista.mostrarEmpate();
+            return jugadores.get(indicesGanadores.get(0)).getNombre();
         }
+
+        return null;
     }
 
     public Baraja getBaraja() {

@@ -1,27 +1,23 @@
 package org.example;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Controlador {
-    private final Vista vista;
+    private final VistaJuego vista;
     private Partida partida;
     private final List<String> nombresJugadores;
     private String nombreJugador;
-    private final Map<String, Jugador> mapajugadores;
     private final GestorArchivos gestorArchivos;
     private final List<Jugador> jugadoresPersistentes;
     private int objetivoPuntos = 31; // por defecto
 
-    public Controlador(Vista vista) {
+    public Controlador(VistaJuego vista) {
         if (vista == null) {
             throw new IllegalArgumentException("La vista no puede ser nula");
         }
         this.vista = vista;
         this.nombresJugadores = new ArrayList<>();
-        this.mapajugadores = new HashMap<>();
         this.gestorArchivos = new GestorArchivos();
         this.jugadoresPersistentes = new ArrayList<>();
     }
@@ -36,18 +32,16 @@ public class Controlador {
         if (vista.pedirConfirmacionInicio()) {
             ejecutarPartidasHastaObjetivo();
         } else {
-            vista.mostrarAdiós();
+            vista.mostrarAdios();
         }
     }
 
     private void prepararJugadoresPersistentes() {
         jugadoresPersistentes.clear();
-        mapajugadores.clear();
 
         for (String nombre : nombresJugadores) {
             Jugador jugador = new Jugador(nombre);
             jugadoresPersistentes.add(jugador);
-            mapajugadores.put(jugador.getNombre(), jugador);
         }
     }
 
@@ -56,8 +50,8 @@ public class Controlador {
 
         while (!objetivoAlcanzado) {
             iniciarNuevaRonda();
-            int[] puntosPartida = resolverRondaActual();
-            objetivoAlcanzado = guardarResultadosYComprobarObjetivo(puntosPartida);
+            ResultadoRonda resultado = resolverRondaActual();
+            objetivoAlcanzado = guardarResultadosYComprobarObjetivo(resultado);
         }
     }
 
@@ -68,22 +62,23 @@ public class Controlador {
         repartirCartasInicialesMesa();
     }
 
-    private int[] resolverRondaActual() {
+    private ResultadoRonda resolverRondaActual() {
         jugarPartida();
-        vista.mostrarEncabezadoResultados();
-        return partida.mostrarYcalcularPuntos(vista);
+        ResultadoRonda resultado = partida.calcularResultadoRonda();
+        vista.mostrarResultadoRonda(resultado);
+        return resultado;
     }
 
-    private boolean guardarResultadosYComprobarObjetivo(int[] puntosPartida) {
+    private boolean guardarResultadosYComprobarObjetivo(ResultadoRonda resultado) {
         try {
-            guardarHistorialPartida(puntosPartida);
+            guardarHistorialPartida(resultado);
         } catch (ExcepcionPersistenciaHistorial e) {
-            vista.mostrarAviso("No se pudo guardar el historial de esta ronda: " + e.getMessage());
+            vista.mostrarAviso(construirMensajeHistorial(e.getMessage()));
         }
 
         boolean objetivoAlcanzado = seAlcanzoObjetivo();
         if (!objetivoAlcanzado) {
-            vista.mostrarAviso("Nadie llegó a los " + objetivoPuntos + " puntos todavía.");
+            vista.mostrarAviso(construirMensajeObjetivoNoAlcanzado());
         }
         return objetivoAlcanzado;
     }
@@ -176,7 +171,7 @@ public class Controlador {
         List<Carta> mano = jugador.getMano();
 
         if (mano.isEmpty()) {
-            throw new IllegalStateException("El jugador " + jugador.getNombre() + " no tiene cartas para jugar");
+            throw new IllegalStateException(construirMensajeSinCartas(jugador.getNombre()));
         }
 
         // Si es una CPU, elegir automáticamente
@@ -233,30 +228,27 @@ public class Controlador {
     }
 
 
-    private void guardarHistorialPartida(int[] puntos) {
-        String ganador = obtenerNombreGanador(puntos);
-        gestorArchivos.guardarHistorialPartida(partida.getJugadores(), puntos, ganador);
+    private void guardarHistorialPartida(ResultadoRonda resultado) {
+        gestorArchivos.guardarHistorialPartida(resultado.getJugadores(), resultado.getPuntos(),
+                resultado.getGanadorNombre());
     }
 
-    private String obtenerNombreGanador(int[] puntos) {
-        int maxPuntos = -1;
-        List<Integer> indicesGanadores = new ArrayList<>();
+    private String construirMensajeHistorial(String detalle) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("No se pudo guardar el historial de esta ronda: ").append(detalle);
+        return sb.toString();
+    }
 
-        for (int i = 0; i < puntos.length; i++) {
-            if (puntos[i] > maxPuntos) {
-                maxPuntos = puntos[i];
-                indicesGanadores.clear();
-                indicesGanadores.add(i);
-            } else if (puntos[i] == maxPuntos) {
-                indicesGanadores.add(i);
-            }
-        }
+    private String construirMensajeObjetivoNoAlcanzado() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Nadie llegó a los ").append(objetivoPuntos).append(" puntos todavía.");
+        return sb.toString();
+    }
 
-        if (indicesGanadores.size() != 1) {
-            return null;
-        }
-
-        return partida.getJugadores().get(indicesGanadores.get(0)).getNombre();
+    private String construirMensajeSinCartas(String nombreJugador) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("El jugador ").append(nombreJugador).append(" no tiene cartas para jugar");
+        return sb.toString();
     }
 }
 

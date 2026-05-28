@@ -5,7 +5,7 @@ import java.util.InputMismatchException;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-public class Vista {
+public class Vista implements VistaJuego {
     private Scanner scanner;
 
     public Vista() {
@@ -199,11 +199,11 @@ public class Vista {
     }
 
     public void mostrarAviso(String mensaje) {
-        System.out.println("Aviso: " + mensaje);
+        System.out.println(construirMensaje("Aviso", mensaje));
     }
 
     public void mostrarError(String mensaje) {
-        System.err.println("Error: " + mensaje);
+        System.err.println(construirMensaje("Error", mensaje));
     }
 
     public void mostrarCartasFinales(String nombreJugador, List<Carta> cartas) {
@@ -220,6 +220,24 @@ public class Vista {
 
     public void mostrarFinPartida() {
         System.out.println("Fin de la ronda");
+    }
+
+    public void mostrarResultadoRonda(ResultadoRonda resultado) {
+        if (resultado == null) {
+            throw new ExcepcionPartida("El resultado de la ronda no puede ser nulo");
+        }
+
+        mostrarEncabezadoResultados();
+        mostrarTablaResultados(resultado.getJugadores(), resultado.getGanadoresCartas(),
+                resultado.getGanadoresOros(), resultado.getGanadoresSietes(), resultado.isEmpateCartas(),
+                resultado.isEmpateOros(), resultado.isEmpateSietes());
+        mostrarPuntosFinales(resultado.getJugadores(), resultado.getPuntos());
+
+        if (resultado.isEmpateFinal()) {
+            mostrarEmpate();
+        } else {
+            mostrarGanador(resultado.getGanadorNombre(), resultado.isGanadorEsJugador());
+        }
     }
 
     // ===== MÉTODOS DE RESULTADOS =====
@@ -316,8 +334,14 @@ public class Vista {
         System.out.println("\nLa ronda terminó en empate.");
     }
 
-    public void mostrarAdiós() {
+    public void mostrarAdios() {
         System.out.println("¡Hasta luego!");
+    }
+
+    private String construirMensaje(String etiqueta, String mensaje) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(etiqueta).append(": ").append(mensaje);
+        return sb.toString();
     }
 
     public void cerrar() {
