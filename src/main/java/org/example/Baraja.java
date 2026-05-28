@@ -12,6 +12,11 @@ public class Baraja {
         inicializarBaraja();
     }
 
+    // Constructor para deserialización
+    public Baraja(List<Carta> cartas) {
+        this.mazo = new ArrayList<>(cartas);
+    }
+
     private void inicializarBaraja() {
         for (Palo palo : Palo.values()) {
             crearCartasDelPalo(palo);
@@ -39,4 +44,7 @@ public class Baraja {
         return mazo.size();
     }
 
+    public List<Carta> getCartas() {
+        return new ArrayList<>(mazo);
+    }
 }

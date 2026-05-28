@@ -77,6 +77,10 @@ public class MontonJugador {
         return escobas;
     }
 
+    public void setEscobas(int escobas) {
+        this.escobas = escobas;
+    }
+
     public int getOros() {
         return cartasPorPalo.getOrDefault(Palo.OROS, 0);
     }

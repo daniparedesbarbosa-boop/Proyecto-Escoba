@@ -4,22 +4,26 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.ToIntFunction;
 
 public class Partida {
+    private final String idPartida;
     private final List<Participante> jugadores;
     private final Baraja baraja;
     private final Mesa mesa;
     private int turnoActual;
     private Participante ultimoQueCapturo = null;
+    private String ultimoQueCapturoNombre; // Para deserialización
     private boolean ultimasCartasMostrado = false;
 
     public Partida(List<Participante> participantes) {
         if (participantes == null || participantes.isEmpty()) {
             throw new ExcepcionPartida("Debe haber al menos un jugador");
         }
-        baraja = new Baraja();
-        mesa = new Mesa();
+        this.idPartida = UUID.randomUUID().toString();
+        this.baraja = new Baraja();
+        this.mesa = new Mesa();
         jugadores = new ArrayList<>();
 
         for (Participante p : participantes) {
@@ -33,6 +37,32 @@ public class Partida {
         turnoActual = 0;
     }
 
+    // Constructor para deserialización
+    public Partida(String idPartida, List<Participante> jugadores, Mesa mesa, Baraja baraja, int turnoActual, String ultimoQueCapturoNombre) {
+        this.idPartida = idPartida;
+        this.jugadores = jugadores;
+        this.mesa = mesa;
+        this.baraja = baraja;
+        this.turnoActual = turnoActual;
+        this.ultimoQueCapturoNombre = ultimoQueCapturoNombre;
+        if (ultimoQueCapturoNombre != null) {
+            this.ultimoQueCapturo = jugadores.stream()
+                .filter(p -> p.getNombre().equals(ultimoQueCapturoNombre))
+                .findFirst().orElse(null);
+        }
+    }
+
+    public String getIdPartida() {
+        return idPartida;
+    }
+
+    public String getUltimoQueCapturoNombre() {
+        return ultimoQueCapturo != null ? ultimoQueCapturo.getNombre() : null;
+    }
+
+    public int getTurnoActual() {
+        return turnoActual;
+    }
 
     public void siguienteTurno() {
         turnoActual = (turnoActual + 1) % jugadores.size();

@@ -1,9 +1,15 @@
 package org.example;
 
+import org.bson.Document;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.List;
 import java.util.InputMismatchException;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class Vista implements VistaJuego {
     private Scanner scanner;
@@ -19,6 +25,51 @@ public class Vista implements VistaJuego {
         System.out.println("║        ¡BIENVENIDO A LA ESCOBA!        ║");
         System.out.println("╚════════════════════════════════════════╝");
         System.out.println();
+    }
+
+    @Override
+    public boolean pedirCargarPartida() {
+        System.out.print("Hay partidas guardadas. ¿Quieres cargar una? (S/N): ");
+        String respuesta = leerLineaSegura("No se pudo leer la respuesta").trim();
+        return respuesta.equalsIgnoreCase("S");
+    }
+
+    @Override
+    public String elegirPartidaGuardada(List<Document> partidas) {
+        if (partidas == null || partidas.isEmpty()) {
+            System.out.println("No hay partidas para cargar.");
+            return null;
+        }
+
+        System.out.println("\n--- Partidas Guardadas ---");
+        for (int i = 0; i < partidas.size(); i++) {
+            Document doc = partidas.get(i);
+            String fechaStr = doc.getString("fechaGuardado");
+            LocalDateTime fecha = LocalDateTime.parse(fechaStr);
+            DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT);
+
+            List<Document> jugadoresDocs = doc.getList("jugadores", Document.class);
+            String jugadoresStr = jugadoresDocs.stream()
+                .map(j -> String.format("%s (%d pts)", j.getString("nombre"), j.getInteger("puntosTotales")))
+                .collect(Collectors.joining(", "));
+
+            System.out.printf("%d. %s - Jugadores: %s%n", i + 1, fecha.format(formatter), jugadoresStr);
+        }
+        System.out.println("--------------------------");
+
+        while (true) {
+            System.out.printf("Elige una partida (1-%d) o 0 para empezar una nueva: ", partidas.size());
+            int opcion = leerNumeroValido();
+            if (opcion >= 0 && opcion <= partidas.size()) {
+                return (opcion == 0) ? null : partidas.get(opcion - 1).getString("idPartida");
+            }
+            System.out.println("Opción no válida.");
+        }
+    }
+
+    @Override
+    public void mostrarPartidaCargada(String idPartida) {
+        System.out.printf("\n¡Partida %s cargada! Continuamos donde la dejamos...%n", idPartida.substring(0, 8));
     }
 
     public String pedirNombre() {
@@ -142,30 +193,30 @@ public class Vista implements VistaJuego {
             int opcion = pedirIndiceCartaValido(mano.size());
             if (opcion > 0) {
                 return opcion - 1;
+            } else if (opcion == -2) { // Código especial para guardar
+                return -2;
             }
         }
     }
 
     private int pedirIndiceCartaValido(int max) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Elige una carta (1-").append(max).append("): ");
-        System.out.print(sb.toString());
+        System.out.printf("Elige una carta (1-%d) o escribe 'S' para guardar y salir: ", max);
+        String entrada = leerLineaSegura("No se pudo leer la entrada").trim();
+
+        if (entrada.equalsIgnoreCase("S")) {
+            return -2; // Devolvemos un código especial para guardar
+        }
+
         try {
-            int opcion = scanner.nextInt();
-            scanner.nextLine();
+            int opcion = Integer.parseInt(entrada);
             if (opcion < 1 || opcion > max) {
-                StringBuilder sb2 = new StringBuilder();
-                sb2.append("Introduce un número entre 1 y ").append(max);
-                System.out.println(sb2.toString());
+                System.out.printf("Introduce un número entre 1 y %d%n", max);
                 return -1;
             }
             return opcion;
-        } catch (InputMismatchException e) {
-            System.out.println("Introduce un número válido");
-            scanner.nextLine();
+        } catch (NumberFormatException e) {
+            System.out.println("Entrada no válida. Introduce un número o 'S'.");
             return -1;
-        } catch (NoSuchElementException | IllegalStateException e) {
-            throw new ExcepcionPartida("No se pudo leer la selección de carta", e);
         }
     }
 
@@ -332,6 +383,11 @@ public class Vista implements VistaJuego {
 
     public void mostrarEmpate() {
         System.out.println("\nLa ronda terminó en empate.");
+    }
+
+    @Override
+    public void mostrarPartidaGuardada() {
+        System.out.println("\nPartida guardada correctamente. ¡Hasta la próxima!");
     }
 
     public void mostrarAdios() {

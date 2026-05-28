@@ -1,9 +1,13 @@
 package org.example;
 
+import org.bson.Document;
 import java.util.List;
 
 public interface VistaJuego {
     void mostrarBienvenida();
+    boolean pedirCargarPartida();
+    String elegirPartidaGuardada(List<Document> partidas);
+    void mostrarPartidaCargada(String idPartida);
     String pedirNombre();
     int pedirNumeroRivales();
     int pedirObjetivoPuntos();
@@ -22,8 +26,7 @@ public interface VistaJuego {
     void mostrarAviso(String mensaje);
     void mostrarFinPartida();
     void mostrarResultadoRonda(ResultadoRonda resultado);
+    void mostrarPartidaGuardada();
     void mostrarAdios();
     void cerrar();
 }
-
-

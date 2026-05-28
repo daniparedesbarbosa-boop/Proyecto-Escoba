@@ -1,15 +1,16 @@
 package org.example;
 
+import org.bson.Document;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Controlador {
     private final VistaJuego vista;
     private Partida partida;
-    private final List<String> nombresJugadores;
+    private List<Participante> jugadoresPersistentes; // Modificado para poder cargarlo
     private String nombreJugador;
     private final GestorArchivos gestorArchivos;
-    private final List<Participante> jugadoresPersistentes;
+    private final MongoDBManager mongoDBManager;
     private int objetivoPuntos = 31; // por defecto
 
     public Controlador(VistaJuego vista) {
@@ -17,46 +18,92 @@ public class Controlador {
             throw new IllegalArgumentException("La vista no puede ser nula");
         }
         this.vista = vista;
-        this.nombresJugadores = new ArrayList<>();
-        this.gestorArchivos = new GestorArchivos();
         this.jugadoresPersistentes = new ArrayList<>();
+        this.gestorArchivos = new GestorArchivos();
+        this.mongoDBManager = new MongoDBManager();
     }
 
     public void iniciarJuego() {
         vista.mostrarBienvenida();
-        configurarJugadores();
-        objetivoPuntos = vista.pedirObjetivoPuntos();
 
-        prepararJugadoresPersistentes();
+        if (!intentarCargarPartida()) {
+            configurarNuevaPartida();
+        }
 
-        if (vista.pedirConfirmacionInicio()) {
+        if (partida == null && (jugadoresPersistentes == null || jugadoresPersistentes.isEmpty())) {
+             vista.mostrarAdios();
+             mongoDBManager.close();
+             return;
+        }
+
+        if (partida != null || vista.pedirConfirmacionInicio()) {
             ejecutarPartidasHastaObjetivo();
         } else {
             vista.mostrarAdios();
         }
+        mongoDBManager.close();
     }
 
-    private void prepararJugadoresPersistentes() {
+    private boolean intentarCargarPartida() {
+        List<Document> partidasGuardadas = mongoDBManager.cargarResumenPartidas();
+        if (partidasGuardadas.isEmpty()) {
+            return false;
+        }
+
+        if (vista.pedirCargarPartida()) {
+            String idPartidaElegida = vista.elegirPartidaGuardada(partidasGuardadas);
+            if (idPartidaElegida != null) {
+                this.partida = mongoDBManager.cargarPartidaCompleta(idPartidaElegida);
+                this.objetivoPuntos = mongoDBManager.obtenerObjetivoPuntos(idPartidaElegida);
+                this.jugadoresPersistentes = new ArrayList<>(partida.getJugadores());
+                this.nombreJugador = jugadoresPersistentes.get(0).getNombre();
+                vista.mostrarPartidaCargada(idPartidaElegida);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void configurarNuevaPartida() {
+        nombreJugador = vista.pedirNombre();
+        int numCPUs = vista.pedirNumeroRivales();
+        List<String> nombresJugadores = construirNombresJugadores(nombreJugador, numCPUs);
+
         jugadoresPersistentes.clear();
-
-        // El primer jugador es siempre humano
         jugadoresPersistentes.add(new JugadorHumano(nombreJugador));
-
-        // El resto son CPUs
         for (String nombre : nombresJugadores) {
             if (!nombre.equals(nombreJugador)) {
                 jugadoresPersistentes.add(new JugadorCPU(nombre));
             }
         }
+        
+        objetivoPuntos = vista.pedirObjetivoPuntos();
+        
+        List<String> rivales = new ArrayList<>(nombresJugadores);
+        rivales.remove(nombreJugador);
+        vista.mostrarConfiguracion(nombreJugador, rivales);
     }
 
     private void ejecutarPartidasHastaObjetivo() {
         boolean objetivoAlcanzado = false;
+        boolean salir = false;
 
-        while (!objetivoAlcanzado) {
+        // Si la partida no fue cargada, se inicia una nueva ronda
+        if (partida == null) {
             iniciarNuevaRonda();
+        }
+
+        while (!objetivoAlcanzado && !salir) {
             ResultadoRonda resultado = resolverRondaActual();
-            objetivoAlcanzado = guardarResultadosYComprobarObjetivo(resultado);
+
+            if (resultado == null) { // El usuario decidió guardar y salir
+                salir = true;
+            } else {
+                objetivoAlcanzado = guardarResultadosYComprobarObjetivo(resultado);
+                if (!objetivoAlcanzado && !salir) {
+                    iniciarNuevaRonda();
+                }
+            }
         }
     }
 
@@ -68,7 +115,10 @@ public class Controlador {
     }
 
     private ResultadoRonda resolverRondaActual() {
-        jugarPartida();
+        boolean salir = jugarPartida(); // Devuelve true si el usuario quiere salir
+        if (salir) {
+            return null;
+        }
         ResultadoRonda resultado = partida.calcularResultadoRonda();
         vista.mostrarResultadoRonda(resultado);
         return resultado;
@@ -97,26 +147,6 @@ public class Controlador {
         return false;
     }
 
-    private void configurarJugadores() {
-        nombreJugador = vista.pedirNombre();
-        int numCPUs = vista.pedirNumeroRivales();
-        nombresJugadores.clear();
-        nombresJugadores.addAll(construirNombresJugadores(nombreJugador, numCPUs));
-
-        List<String> rivales = new ArrayList<>(nombresJugadores);
-        rivales.remove(0);
-        vista.mostrarConfiguracion(nombreJugador, rivales);
-    }
-
-    private void repartirCartasInicialesMesa() {
-        for (int i = 0; i < 4; i++) {
-            Carta carta = partida.getBaraja().repartirCarta();
-            if (carta != null) {
-                partida.getMesa().añadirCarta(carta);
-            }
-        }
-    }
-
     private List<String> construirNombresJugadores(String nombreJugador, int numCPUs) {
         List<String> nombres = new ArrayList<>();
         nombres.add(nombreJugador);
@@ -129,17 +159,34 @@ public class Controlador {
         return nombres;
     }
 
-    private void jugarPartida() {
+    private void repartirCartasInicialesMesa() {
+        for (int i = 0; i < 4; i++) {
+            Carta carta = partida.getBaraja().repartirCarta();
+            if (carta != null) {
+                partida.getMesa().añadirCarta(carta);
+            }
+        }
+    }
+
+    private boolean jugarPartida() {
         while (!partida.finPartida()) {
             repartirCartasSiProcede();
             mostrarEstadoJuego();
 
             Participante jugador = partida.jugadorActual();
             int cartaElegida = elegirCartaJugador(jugador);
+
+            if (cartaElegida == -2) { // Código para guardar y salir
+                mongoDBManager.guardarPartida(partida, objetivoPuntos);
+                vista.mostrarPartidaGuardada();
+                return true; // Indicar que se debe salir
+            }
+
             jugarTurno(cartaElegida);
         }
 
         finalizarPartida();
+        return false; // No se salió
     }
 
     private void repartirCartasSiProcede() {
