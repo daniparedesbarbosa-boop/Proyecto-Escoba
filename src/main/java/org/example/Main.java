@@ -2,6 +2,12 @@ package org.example;
 
 public class Main {
     public static void main(String[] args) {
+        // Reducir el ruido de logging del driver de MongoDB (se establece antes de crear el controlador
+        // porque este último crea el MongoDBManager que inicializa el cliente).
+        // Usamos las propiedades de slf4j-simple para bajar el nivel a WARN.
+        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "warn");
+        System.setProperty("org.slf4j.simpleLogger.log.org.mongodb.driver", "warn");
+
         Vista vista = new Vista();
         Controlador controlador = new Controlador(vista);
 

@@ -2,7 +2,8 @@ package org.example;
 
 import java.util.List;
 
-public class Maquina extends Participante {
+@Deprecated
+public class Maquina extends JugadorCPU {
     public Maquina() {
         super("Máquina");
     }

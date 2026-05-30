@@ -26,7 +26,21 @@ public interface VistaJuego {
     void mostrarAviso(String mensaje);
     void mostrarFinPartida();
     void mostrarResultadoRonda(ResultadoRonda resultado);
+    void mostrarSoloPuntosTotales(List<Participante> jugadores);
     void mostrarPartidaGuardada();
     void mostrarAdios();
     void cerrar();
+
+    /**
+     * Pregunta simple que se muestra inmediatamente después de cargar una partida:
+     * ¿Continuar? (S/N). Si el usuario responde N se debe terminar la ejecución.
+     * @return true si el usuario elige continuar (S), false si elige no (N)
+     */
+    boolean pedirContinuarDespuesCarga();
+
+    /**
+     * Pregunta al usuario si desea guardar la partida entre rondas o continuar jugando.
+     * @return true si el usuario elige guardar (G), false si elige continuar (C)
+     */
+    boolean pedirGuardarEntreRondas();
 }

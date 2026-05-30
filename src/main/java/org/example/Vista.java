@@ -193,19 +193,14 @@ public class Vista implements VistaJuego {
             int opcion = pedirIndiceCartaValido(mano.size());
             if (opcion > 0) {
                 return opcion - 1;
-            } else if (opcion == -2) { // Código especial para guardar
-                return -2;
             }
         }
     }
 
     private int pedirIndiceCartaValido(int max) {
-        System.out.printf("Elige una carta (1-%d) o escribe 'S' para guardar y salir: ", max);
+        System.out.printf("Elige una carta (1-%d): ", max);
         String entrada = leerLineaSegura("No se pudo leer la entrada").trim();
 
-        if (entrada.equalsIgnoreCase("S")) {
-            return -2; // Devolvemos un código especial para guardar
-        }
 
         try {
             int opcion = Integer.parseInt(entrada);
@@ -215,7 +210,7 @@ public class Vista implements VistaJuego {
             }
             return opcion;
         } catch (NumberFormatException e) {
-            System.out.println("Entrada no válida. Introduce un número o 'S'.");
+            System.out.println("Entrada no válida. Introduce un número.");
             return -1;
         }
     }
@@ -286,8 +281,21 @@ public class Vista implements VistaJuego {
 
         if (resultado.isEmpateFinal()) {
             mostrarEmpate();
-        } else {
-            mostrarGanador(resultado.getGanadorNombre(), resultado.isGanadorEsJugador());
+        }
+    }
+
+    /**
+     * Muestra únicamente los puntos totales acumulados de la partida.
+     * No enseña tabla, ni banner de fin de ronda, ni ganador.
+     */
+    @Override
+    public void mostrarSoloPuntosTotales(List<Participante> jugadores) {
+        System.out.println("\nPuntos totales:");
+        for (Participante j : jugadores) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(j.getNombre()).append(": ").append(j.getPuntosTotales())
+               .append(" punto").append(j.getPuntosTotales() == 1 ? "" : "s");
+            System.out.println(sb.toString());
         }
     }
 
@@ -388,6 +396,36 @@ public class Vista implements VistaJuego {
     @Override
     public void mostrarPartidaGuardada() {
         System.out.println("\nPartida guardada correctamente. ¡Hasta la próxima!");
+    }
+
+    @Override
+    public boolean pedirGuardarEntreRondas() {
+        while (true) {
+            System.out.print("\nQuieres continuar la partida o prefieres guardar?: Continuar (C), Guardar (G): ");
+            String entrada = leerLineaSegura("No se pudo leer la entrada").trim();
+            if (entrada.equalsIgnoreCase("C")) {
+                return false;
+            } else if (entrada.equalsIgnoreCase("G")) {
+                return true;
+            } else {
+                System.out.println("Opción no válida. Introduce 'C' para continuar o 'G' para guardar.");
+            }
+        }
+    }
+
+    @Override
+    public boolean pedirContinuarDespuesCarga() {
+        while (true) {
+            System.out.print("¿Comenzamos? (S/N): ");
+            String entrada = leerLineaSegura("No se pudo leer la entrada").trim();
+            if (entrada.equalsIgnoreCase("S")) {
+                return true;
+            } else if (entrada.equalsIgnoreCase("N")) {
+                return false;
+            } else {
+                System.out.println("Opción no válida. Introduce 'S' para sí o 'N' para no.");
+            }
+        }
     }
 
     public void mostrarAdios() {

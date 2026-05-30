@@ -15,7 +15,6 @@ import java.util.List;
 public class MongoDBManager {
 
     private final MongoClient mongoClient;
-    private final MongoDatabase database;
     private final SerializadorPartida serializador;
     private final MongoCollection<Document> coleccionPartidas;
 
@@ -24,10 +23,43 @@ public class MongoDBManager {
         String uri = dotenv.get("MONGO_URI", "mongodb://localhost:27017");
         String dbName = dotenv.get("MONGO_DATABASE", "escoba");
 
-        this.mongoClient = MongoClients.create(uri);
-        this.database = mongoClient.getDatabase(dbName);
-        this.coleccionPartidas = database.getCollection("partidas_guardadas");
-        this.serializador = new SerializadorPartida();
+        if (uri == null || uri.isBlank()) {
+            throw new ExcepcionPersistenciaHistorial("MONGO_URI no está configurada");
+        }
+        if (dbName == null || dbName.isBlank()) {
+            throw new ExcepcionPersistenciaHistorial("MONGO_DATABASE no está configurada");
+        }
+
+        SerializadorPartida s = new SerializadorPartida();
+        this.serializador = s;
+
+        MongoClient client = null;
+        MongoCollection<Document> coll = null;
+
+        try {
+            client = MongoClients.create(uri);
+            MongoDatabase db = client.getDatabase(dbName);
+            coll = db.getCollection("partidas_guardadas");
+
+            // Intentamos un ping rápido para confirmar que el servidor responde
+            try {
+                db.runCommand(new Document("ping", 1));
+            } catch (Exception pingEx) {
+                // Si el ping falla, consideramos la conexión no disponible
+                System.err.println("[MongoDBManager] Ping a MongoDB falló: " + pingEx.getMessage());
+                client.close();
+                client = null;
+                coll = null;
+            }
+        } catch (Exception e) {
+            System.err.println("[MongoDBManager] No se pudo conectar a MongoDB: " + e.getMessage());
+            // Dejamos los campos en null para que el resto del programa funcione sin persistencia
+            client = null;
+            coll = null;
+        }
+
+        this.mongoClient = client;
+        this.coleccionPartidas = coll;
     }
 
     public void close() {
@@ -43,11 +75,37 @@ public class MongoDBManager {
      * @param objetivoPuntos El objetivo de puntos de la partida.
      */
     public void guardarPartida(Partida partida, int objetivoPuntos) {
+        if (coleccionPartidas == null) {
+            throw new ExcepcionPersistenciaHistorial("No hay conexión disponible con la base de datos");
+        }
+
         Document partidaDoc = serializador.toDocument(partida, objetivoPuntos);
         coleccionPartidas.replaceOne(
-            Filters.eq("idPartida", partida.getIdPartida()),
-            partidaDoc,
-            new ReplaceOptions().upsert(true)
+                Filters.eq("idPartida", partida.getIdPartida()),
+                partidaDoc,
+                new ReplaceOptions().upsert(true)
+        );
+    }
+
+    /**
+     * Guarda o actualiza la partida usando un id explícito si se proporciona.
+     * Esto evita crear un nuevo slot cuando la partida fue cargada y su id
+     * en memoria difiere por alguna razón.
+     */
+    public void guardarPartida(Partida partida, int objetivoPuntos, String idOverride) {
+        if (coleccionPartidas == null) {
+            throw new ExcepcionPersistenciaHistorial("No hay conexión disponible con la base de datos");
+        }
+
+        String idToUse = (idOverride != null && !idOverride.isBlank()) ? idOverride : partida.getIdPartida();
+        Document partidaDoc = serializador.toDocument(partida, objetivoPuntos);
+        // Aseguramos que el documento contiene el id que vamos a usar para el upsert
+        partidaDoc.put("idPartida", idToUse);
+
+        coleccionPartidas.replaceOne(
+                Filters.eq("idPartida", idToUse),
+                partidaDoc,
+                new ReplaceOptions().upsert(true)
         );
     }
 
@@ -57,11 +115,15 @@ public class MongoDBManager {
      */
     public List<Document> cargarResumenPartidas() {
         List<Document> resumenes = new ArrayList<>();
+        if (coleccionPartidas == null) {
+            return resumenes; // devolvemos vacío si no hay conexión
+        }
+
         // Proyección para obtener solo los datos necesarios para el resumen
         Document proyeccion = new Document("idPartida", 1)
-                                .append("fechaGuardado", 1)
-                                .append("jugadores.nombre", 1)
-                                .append("jugadores.puntosTotales", 1);
+                .append("fechaGuardado", 1)
+                .append("jugadores.nombre", 1)
+                .append("jugadores.puntosTotales", 1);
 
         for (Document doc : coleccionPartidas.find().projection(proyeccion)) {
             resumenes.add(doc);
@@ -75,6 +137,7 @@ public class MongoDBManager {
      * @return Un objeto Partida reconstruido, o null si no se encuentra.
      */
     public Partida cargarPartidaCompleta(String idPartida) {
+        if (coleccionPartidas == null) return null;
         Document partidaDoc = coleccionPartidas.find(Filters.eq("idPartida", idPartida)).first();
         if (partidaDoc != null) {
             return serializador.fromDocument(partidaDoc);
@@ -88,9 +151,10 @@ public class MongoDBManager {
      * @return El objetivo de puntos.
      */
     public int obtenerObjetivoPuntos(String idPartida) {
+        if (coleccionPartidas == null) return 31;
         Document doc = coleccionPartidas.find(Filters.eq("idPartida", idPartida))
-                                        .projection(new Document("objetivoPuntos", 1))
-                                        .first();
+                .projection(new Document("objetivoPuntos", 1))
+                .first();
         return (doc != null) ? doc.getInteger("objetivoPuntos", 31) : 31;
     }
 }

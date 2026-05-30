@@ -12,6 +12,10 @@ public class Controlador {
     private final GestorArchivos gestorArchivos;
     private final MongoDBManager mongoDBManager;
     private int objetivoPuntos = 31; // por defecto
+    private boolean partidaCargadaAlInicio = false;
+    private boolean primeraRondaTrasCarga = false;
+    private boolean avisoMostradoAlCargar = false;
+    private String idPartidaCargada = null;
 
     public Controlador(VistaJuego vista) {
         if (vista == null) {
@@ -26,8 +30,18 @@ public class Controlador {
     public void iniciarJuego() {
         vista.mostrarBienvenida();
 
-        if (!intentarCargarPartida()) {
+        partidaCargadaAlInicio = intentarCargarPartida();
+        primeraRondaTrasCarga = partidaCargadaAlInicio;
+
+        if (!partidaCargadaAlInicio) {
             configurarNuevaPartida();
+        } else {
+            boolean continuar = vista.pedirContinuarDespuesCarga();
+            if (!continuar) {
+                vista.mostrarAdios();
+                mongoDBManager.close();
+                return;
+            }
         }
 
         if (partida == null && (jugadoresPersistentes == null || jugadoresPersistentes.isEmpty())) {
@@ -58,6 +72,15 @@ public class Controlador {
                 this.jugadoresPersistentes = new ArrayList<>(partida.getJugadores());
                 this.nombreJugador = jugadoresPersistentes.get(0).getNombre();
                 vista.mostrarPartidaCargada(idPartidaElegida);
+                // Mostrar sólo los puntos totales y, si procede, el aviso de objetivo
+                vista.mostrarSoloPuntosTotales(partida.getJugadores());
+                if (!seAlcanzoObjetivo()) {
+                    vista.mostrarAviso(construirMensajeObjetivoNoAlcanzado());
+                    avisoMostradoAlCargar = true; // recordamos que ya mostramos el aviso
+                }
+                idPartidaCargada = idPartidaElegida;
+                // Añadimos una línea vacía antes del prompt "¿Comenzamos?"
+                System.out.println();
                 return true;
             }
         }
@@ -99,6 +122,31 @@ public class Controlador {
             if (resultado == null) { // El usuario decidió guardar y salir
                 salir = true;
             } else {
+                if (partidaCargadaAlInicio && primeraRondaTrasCarga) {
+                    // Ya mostramos los puntos totales y aviso al cargar la partida,
+                    // evitamos repetir la presentación de la ronda y el banner.
+                    primeraRondaTrasCarga = false;
+                } else {
+                    // Mostrar el resultado normal (sin mensaje de ganador, según petición)
+                    vista.mostrarResultadoRonda(resultado);
+                    boolean deseaGuardar = vista.pedirGuardarEntreRondas();
+                    if (deseaGuardar) {
+                        try {
+                            // Si la sesión empezó cargando una partida, usamos su id original
+                            // para asegurarnos de sobrescribir el mismo slot.
+                            if (partidaCargadaAlInicio && idPartidaCargada != null) {
+                                mongoDBManager.guardarPartida(partida, objetivoPuntos, idPartidaCargada);
+                            } else {
+                                mongoDBManager.guardarPartida(partida, objetivoPuntos);
+                            }
+                            vista.mostrarPartidaGuardada();
+                        } catch (ExcepcionPersistenciaHistorial e) {
+                            vista.mostrarAviso("No se pudo guardar la partida en la base de datos: " + e.getMessage());
+                        }
+                        salir = true;
+                        continue;
+                    }
+                }
                 objetivoAlcanzado = guardarResultadosYComprobarObjetivo(resultado);
                 if (!objetivoAlcanzado && !salir) {
                     iniciarNuevaRonda();
@@ -120,7 +168,6 @@ public class Controlador {
             return null;
         }
         ResultadoRonda resultado = partida.calcularResultadoRonda();
-        vista.mostrarResultadoRonda(resultado);
         return resultado;
     }
 
@@ -133,7 +180,12 @@ public class Controlador {
 
         boolean objetivoAlcanzado = seAlcanzoObjetivo();
         if (!objetivoAlcanzado) {
-            vista.mostrarAviso(construirMensajeObjetivoNoAlcanzado());
+            if (avisoMostradoAlCargar) {
+                // Ya mostramos el aviso al cargar la partida; no lo repetimos.
+                avisoMostradoAlCargar = false; // limpiamos la marca
+            } else {
+                vista.mostrarAviso(construirMensajeObjetivoNoAlcanzado());
+            }
         }
         return objetivoAlcanzado;
     }
@@ -176,12 +228,6 @@ public class Controlador {
             Participante jugador = partida.jugadorActual();
             int cartaElegida = elegirCartaJugador(jugador);
 
-            if (cartaElegida == -2) { // Código para guardar y salir
-                mongoDBManager.guardarPartida(partida, objetivoPuntos);
-                vista.mostrarPartidaGuardada();
-                return true; // Indicar que se debe salir
-            }
-
             jugarTurno(cartaElegida);
         }
 
@@ -198,7 +244,11 @@ public class Controlador {
 
     private void finalizarPartida() {
         partida.asignarCartasFinales();
-        vista.mostrarFinPartida();
+        // No mostramos el banner "Fin de la ronda" si estamos finalizando la primera ronda
+        // tras haber cargado la partida (ese banner ya no debe aparecer al reanudar).
+        if (!(partidaCargadaAlInicio && primeraRondaTrasCarga)) {
+            vista.mostrarFinPartida();
+        }
     }
 
     private void mostrarEstadoJuego() {

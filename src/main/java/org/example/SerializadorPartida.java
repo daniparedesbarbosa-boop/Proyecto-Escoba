@@ -29,11 +29,12 @@ public class SerializadorPartida {
     }
 
     private Document participanteToDocument(Participante p) {
-        return new Document("_class", p.getClass().getName()) // Guardamos la clase para la deserialización
+        // Guardamos solo la información necesaria: clase, nombre y puntos totales.
+        // No guardamos las cartas en mano ni el monton para que al cargar
+        // la partida todos los jugadores comiencen sin cartas en mano.
+        return new Document("_class", p.getClass().getName())
                 .append("nombre", p.getNombre())
-                .append("puntosTotales", p.getPuntosTotales())
-                .append("mano", p.getMano().stream().map(this::cartaToDocument).collect(Collectors.toList()))
-                .append("monton", montonToDocument(p.getMonton()));
+                .append("puntosTotales", p.getPuntosTotales());
     }
 
     private Document montonToDocument(MontonJugador m) {
@@ -84,20 +85,6 @@ public class SerializadorPartida {
         }
 
         p.addPuntosTotales(puntosTotales);
-
-        List<Document> manoDocs = doc.getList("mano", Document.class);
-        manoDocs.stream().map(this::documentToCarta).forEach(p::recibirCarta);
-
-        Document montonDoc = doc.get("monton", Document.class);
-        if (montonDoc != null) {
-            // Reiniciamos el montón para asegurar que no contenga datos de estados anteriores.
-            p.getMonton().reiniciar();
-
-            List<Document> cartasMontonDocs = montonDoc.getList("cartas", Document.class);
-            List<Carta> cartasMonton = cartasMontonDocs.stream().map(this::documentToCarta).collect(Collectors.toList());
-            p.getMonton().agregarCartas(cartasMonton);
-            p.getMonton().setEscobas(montonDoc.getInteger("escobas", 0));
-        }
 
         return p;
     }
