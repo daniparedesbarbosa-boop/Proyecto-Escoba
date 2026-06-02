@@ -3,11 +3,11 @@ package org.example;
 import java.util.List;
 
 public class ResultadoRonda {
-    private final List<Participante> jugadores;
+    private final List<Jugador> jugadores;
     private final int[] puntos;
-    private final List<Participante> ganadoresCartas;
-    private final List<Participante> ganadoresOros;
-    private final List<Participante> ganadoresSietes;
+    private final List<Jugador> ganadoresCartas;
+    private final List<Jugador> ganadoresOros;
+    private final List<Jugador> ganadoresSietes;
     private final boolean empateCartas;
     private final boolean empateOros;
     private final boolean empateSietes;
@@ -15,11 +15,11 @@ public class ResultadoRonda {
     private final boolean ganadorEsJugador;
     private final boolean empateFinal;
 
-    public ResultadoRonda(List<Participante> jugadores,
+    public ResultadoRonda(List<Jugador> jugadores,
                           int[] puntos,
-                          List<Participante> ganadoresCartas,
-                          List<Participante> ganadoresOros,
-                          List<Participante> ganadoresSietes,
+                          List<Jugador> ganadoresCartas,
+                          List<Jugador> ganadoresOros,
+                          List<Jugador> ganadoresSietes,
                           boolean empateCartas,
                           boolean empateOros,
                           boolean empateSietes,
@@ -44,7 +44,7 @@ public class ResultadoRonda {
         this.empateFinal = empateFinal;
     }
 
-    public List<Participante> getJugadores() {
+    public List<Jugador> getJugadores() {
         return jugadores;
     }
 
@@ -52,15 +52,15 @@ public class ResultadoRonda {
         return puntos.clone();
     }
 
-    public List<Participante> getGanadoresCartas() {
+    public List<Jugador> getGanadoresCartas() {
         return ganadoresCartas;
     }
 
-    public List<Participante> getGanadoresOros() {
+    public List<Jugador> getGanadoresOros() {
         return ganadoresOros;
     }
 
-    public List<Participante> getGanadoresSietes() {
+    public List<Jugador> getGanadoresSietes() {
         return ganadoresSietes;
     }
 

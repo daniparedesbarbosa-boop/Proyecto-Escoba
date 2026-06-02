@@ -9,15 +9,15 @@ import java.util.function.ToIntFunction;
 
 public class Partida {
     private final String idPartida;
-    private final List<Participante> jugadores;
+    private final List<Jugador> jugadores;
     private final Baraja baraja;
     private final Mesa mesa;
     private int turnoActual;
-    private Participante ultimoQueCapturo = null;
+    private Jugador ultimoQueCapturo = null;
     private String ultimoQueCapturoNombre; // Para deserialización
     private boolean ultimasCartasMostrado = false;
 
-    public Partida(List<Participante> participantes) {
+    public Partida(List<Jugador> participantes) {
         if (participantes == null || participantes.isEmpty()) {
             throw new ExcepcionPartida("Debe haber al menos un jugador");
         }
@@ -26,7 +26,7 @@ public class Partida {
         this.mesa = new Mesa();
         jugadores = new ArrayList<>();
 
-        for (Participante p : participantes) {
+        for (Jugador p : participantes) {
             if (p == null) {
                 throw new ExcepcionPartida("La lista de participantes no puede contener nulos");
             }
@@ -38,7 +38,7 @@ public class Partida {
     }
 
     // Constructor para deserialización
-    public Partida(String idPartida, List<Participante> jugadores, Mesa mesa, Baraja baraja, int turnoActual, String ultimoQueCapturoNombre) {
+    public Partida(String idPartida, List<Jugador> jugadores, Mesa mesa, Baraja baraja, int turnoActual, String ultimoQueCapturoNombre) {
         this.idPartida = idPartida;
         this.jugadores = jugadores;
         this.mesa = mesa;
@@ -103,7 +103,7 @@ public class Partida {
             throw new ExcepcionPartida("No se puede repartir cartas sin jugadores");
         }
 
-        for (Participante j :  jugadores) {
+        for (Jugador j :  jugadores) {
             for (int i = 0; i < 3; i++) {
                 Carta carta = baraja.repartirCarta();
                 if (carta != null) {
@@ -115,9 +115,9 @@ public class Partida {
 
     public ResultadoRonda calcularResultadoRonda() {
 
-        List<Participante> ganadoresCartas = obtenerGanadores(m -> m.getCartasCapturadas());
-        List<Participante> ganadoresOros = obtenerGanadores(MontonJugador::getOrosCapturados);
-        List<Participante> ganadoresSietes = obtenerGanadores(MontonJugador::getSietes);
+        List<Jugador> ganadoresCartas = obtenerGanadores(m -> m.getCartasCapturadas());
+        List<Jugador> ganadoresOros = obtenerGanadores(MontonJugador::getOrosCapturados);
+        List<Jugador> ganadoresSietes = obtenerGanadores(MontonJugador::getSietes);
 
         boolean empateCartas = hayEmpate(ganadoresCartas);
         boolean empateOros = hayEmpate(ganadoresOros);
@@ -131,11 +131,11 @@ public class Partida {
                 empateCartas, empateOros, empateSietes);
     }
 
-    private List<Participante> obtenerGanadores(ToIntFunction<MontonJugador> extractor) {
+    private List<Jugador> obtenerGanadores(ToIntFunction<MontonJugador> extractor) {
         int maximo = calcularMaximo(extractor);
-        List<Participante> ganadores = new ArrayList<>();
+        List<Jugador> ganadores = new ArrayList<>();
 
-        for (Participante jugador : jugadores) {
+        for (Jugador jugador : jugadores) {
             if (extractor.applyAsInt(jugador.getMonton()) == maximo) {
                 ganadores.add(jugador);
             }
@@ -146,7 +146,7 @@ public class Partida {
 
     private int calcularMaximo(ToIntFunction<MontonJugador> extractor) {
         int maximo = -1;
-        for (Participante jugador : jugadores) {
+        for (Jugador jugador : jugadores) {
             int valor = extractor.applyAsInt(jugador.getMonton());
             if (valor > maximo) {
                 maximo = valor;
@@ -155,7 +155,7 @@ public class Partida {
         return maximo;
     }
 
-    private boolean hayEmpate(List<Participante> ganadores) {
+    private boolean hayEmpate(List<Jugador> ganadores) {
         return ganadores.size() > 1;
     }
 
@@ -165,9 +165,9 @@ public class Partida {
         }
     }
 
-    private ResultadoRonda construirResultadoRonda(int[] puntos, List<Participante> ganadoresCartas,
-                                                   List<Participante> ganadoresOros,
-                                                   List<Participante> ganadoresSietes,
+    private ResultadoRonda construirResultadoRonda(int[] puntos, List<Jugador> ganadoresCartas,
+                                                   List<Jugador> ganadoresOros,
+                                                   List<Jugador> ganadoresSietes,
                                                    boolean empateCartas, boolean empateOros,
                                                    boolean empateSietes) {
         String ganadorNombre = determinarGanadorNombre(puntos);
@@ -178,10 +178,10 @@ public class Partida {
                 empateCartas, empateOros, empateSietes, ganadorNombre, ganadorEsJugador, empateFinal);
     }
 
-    private int[] calcularPuntosTotales(List<Participante> ganadoresCartas, List<Participante> ganadoresOros,
-                                        List<Participante> ganadoresSietes, boolean empateCartas,
+    private int[] calcularPuntosTotales(List<Jugador> ganadoresCartas, List<Jugador> ganadoresOros,
+                                        List<Jugador> ganadoresSietes, boolean empateCartas,
                                         boolean empateOros, boolean empateSietes) {
-        Map<Participante, Integer> puntosMap = crearMapaPuntosInicial();
+        Map<Jugador, Integer> puntosMap = crearMapaPuntosInicial();
         sumarPuntosPorCategoria(puntosMap, ganadoresCartas, empateCartas);
         sumarPuntosPorCategoria(puntosMap, ganadoresOros, empateOros);
         sumarPuntosPorCategoria(puntosMap, ganadoresSietes, empateSietes);
@@ -190,40 +190,40 @@ public class Partida {
         return convertirPuntosEnArray(puntosMap);
     }
 
-    private Map<Participante, Integer> crearMapaPuntosInicial() {
-        Map<Participante, Integer> puntosMap = new HashMap<>();
-        for (Participante jugador : jugadores) {
+    private Map<Jugador, Integer> crearMapaPuntosInicial() {
+        Map<Jugador, Integer> puntosMap = new HashMap<>();
+        for (Jugador jugador : jugadores) {
             puntosMap.put(jugador, 0);
         }
         return puntosMap;
     }
 
-    private void sumarPuntosPorCategoria(Map<Participante, Integer> puntosMap, List<Participante> ganadores,
+    private void sumarPuntosPorCategoria(Map<Jugador, Integer> puntosMap, List<Jugador> ganadores,
                                          boolean hayEmpate) {
         if (hayEmpate) {
             return;
         }
 
-        for (Participante ganador : ganadores) {
+        for (Jugador ganador : ganadores) {
             puntosMap.put(ganador, puntosMap.get(ganador) + 1);
         }
     }
 
-    private void sumarPuntosPorEscobas(Map<Participante, Integer> puntosMap) {
-        for (Participante jugador : jugadores) {
+    private void sumarPuntosPorEscobas(Map<Jugador, Integer> puntosMap) {
+        for (Jugador jugador : jugadores) {
             puntosMap.put(jugador, puntosMap.get(jugador) + jugador.getMonton().getEscobas());
         }
     }
 
-    private void sumarPuntosPorVelo(Map<Participante, Integer> puntosMap) {
-        for (Participante jugador : jugadores) {
+    private void sumarPuntosPorVelo(Map<Jugador, Integer> puntosMap) {
+        for (Jugador jugador : jugadores) {
             if (jugador.getMonton().getVelo()) {
                 puntosMap.put(jugador, puntosMap.get(jugador) + 1);
             }
         }
     }
 
-    private int[] convertirPuntosEnArray(Map<Participante, Integer> puntosMap) {
+    private int[] convertirPuntosEnArray(Map<Jugador, Integer> puntosMap) {
         int[] puntos = new int[jugadores.size()];
         for (int i = 0; i < jugadores.size(); i++) {
             puntos[i] = puntosMap.get(jugadores.get(i));
@@ -260,15 +260,15 @@ public class Partida {
         return mesa;
     }
 
-    public List<Participante> getJugadores() {
+    public List<Jugador> getJugadores() {
         return new ArrayList<>(jugadores);
     }
 
-    public Participante jugadorActual() {
+    public Jugador jugadorActual() {
         return jugadores.get(turnoActual);
     }
 
-    public void establecerUltimoCapturador(Participante jugador) {
+    public void establecerUltimoCapturador(Jugador jugador) {
         ultimoQueCapturo = jugador;
     }
 

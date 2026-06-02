@@ -3,7 +3,7 @@ package org.example;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JugadorCPU extends Participante {
+public class JugadorCPU extends Jugador {
     public JugadorCPU(String nombre) {
         super(nombre);
     }

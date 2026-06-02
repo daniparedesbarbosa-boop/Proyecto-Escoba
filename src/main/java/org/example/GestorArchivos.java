@@ -18,7 +18,7 @@ public class GestorArchivos {
     private static final String CABECERA = "fecha;jugador;puntos;cartas;oros;sietes;escobas;velo;resultado";
     private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public void guardarHistorialPartida(List<Participante> jugadores, int[] puntos, String ganador) {
+    public void guardarHistorialPartida(List<Jugador> jugadores, int[] puntos, String ganador) {
         if (jugadores == null || puntos == null) {
             throw new ExcepcionPersistenciaHistorial("Los datos de la partida no pueden ser nulos");
         }
@@ -63,7 +63,7 @@ public class GestorArchivos {
 
                 String fecha = LocalDateTime.now().format(FORMATO_FECHA);
                 for (int i = 0; i < jugadores.size(); i++) {
-                    Participante jugador = jugadores.get(i);
+                    Jugador jugador = jugadores.get(i);
                     MontonJugador monton = jugador.getMonton();
                     String resultado = ganador == null ? "EMPATE" : (jugador.getNombre().equals(ganador) ? "GANADOR" : "PERDEDOR");
 

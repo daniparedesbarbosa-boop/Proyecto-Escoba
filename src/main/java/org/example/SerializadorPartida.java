@@ -14,7 +14,7 @@ public class SerializadorPartida {
     public Document toDocument(Partida partida, int objetivoPuntos) {
         if (partida == null) return null;
 
-        Participante ultimoCaptor = partida.getJugadores().stream()
+        Jugador ultimoCaptor = partida.getJugadores().stream()
                 .filter(p -> p.getNombre().equals(partida.getUltimoQueCapturoNombre()))
                 .findFirst().orElse(null);
 
@@ -28,7 +28,7 @@ public class SerializadorPartida {
                 .append("ultimoQueCapturoNombre", ultimoCaptor != null ? ultimoCaptor.getNombre() : null);
     }
 
-    private Document participanteToDocument(Participante p) {
+    private Document participanteToDocument(Jugador p) {
         // Guardamos solo la información necesaria: clase, nombre y puntos totales.
         // No guardamos las cartas en mano ni el monton para que al cargar
         // la partida todos los jugadores comiencen sin cartas en mano.
@@ -53,7 +53,7 @@ public class SerializadorPartida {
         if (doc == null) return null;
 
         List<Document> jugadoresDocs = doc.getList("jugadores", Document.class);
-        List<Participante> jugadores = jugadoresDocs.stream().map(this::documentToParticipante).collect(Collectors.toList());
+        List<Jugador> jugadores = jugadoresDocs.stream().map(this::documentToParticipante).collect(Collectors.toList());
 
         List<Document> mesaDocs = doc.getList("mesa", Document.class);
         Mesa mesa = new Mesa();
@@ -70,18 +70,18 @@ public class SerializadorPartida {
         return new Partida(idPartida, jugadores, mesa, baraja, turnoActual, ultimoQueCapturoNombre);
     }
 
-    private Participante documentToParticipante(Document doc) {
+    private Jugador documentToParticipante(Document doc) {
         String className = doc.getString("_class");
         String nombre = doc.getString("nombre");
         int puntosTotales = doc.getInteger("puntosTotales");
 
-        Participante p;
+        Jugador p;
         if (JugadorHumano.class.getName().equals(className)) {
             p = new JugadorHumano(nombre);
         } else if (JugadorCPU.class.getName().equals(className)) {
             p = new JugadorCPU(nombre);
         } else {
-            throw new IllegalArgumentException("Clase de Participante desconocida: " + className);
+            throw new IllegalArgumentException("Clase de Jugador desconocida: " + className);
         }
 
         p.addPuntosTotales(puntosTotales);

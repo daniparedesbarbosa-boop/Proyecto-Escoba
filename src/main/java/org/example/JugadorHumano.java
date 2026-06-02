@@ -1,6 +1,6 @@
 package org.example;
 
-public class JugadorHumano extends Participante {
+public class JugadorHumano extends Jugador {
     public JugadorHumano(String nombre) {
         super(nombre);
     }

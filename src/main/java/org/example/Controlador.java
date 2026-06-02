@@ -7,7 +7,7 @@ import java.util.List;
 public class Controlador {
     private final VistaJuego vista;
     private Partida partida;
-    private List<Participante> jugadoresPersistentes; // Modificado para poder cargarlo
+    private List<Jugador> jugadoresPersistentes; // Modificado para poder cargarlo
     private String nombreJugador;
     private final GestorArchivos gestorArchivos;
     private final MongoDBManager mongoDBManager;
@@ -191,7 +191,7 @@ public class Controlador {
     }
 
     private boolean seAlcanzoObjetivo() {
-        for (Participante jugador : jugadoresPersistentes) {
+        for (Jugador jugador : jugadoresPersistentes) {
             if (jugador.getPuntosTotales() >= objetivoPuntos) {
                 return true;
             }
@@ -225,7 +225,7 @@ public class Controlador {
             repartirCartasSiProcede();
             mostrarEstadoJuego();
 
-            Participante jugador = partida.jugadorActual();
+            Jugador jugador = partida.jugadorActual();
             int cartaElegida = elegirCartaJugador(jugador);
 
             jugarTurno(cartaElegida);
@@ -258,7 +258,7 @@ public class Controlador {
 
         mostrarUltimasCartasSiProcede();
 
-        Participante jugador = partida.jugadorActual();
+        Jugador jugador = partida.jugadorActual();
         vista.mostrarTurnoJugador(jugador.getNombre());
     }
 
@@ -269,7 +269,7 @@ public class Controlador {
         }
     }
 
-    private int elegirCartaJugador(Participante jugador) {
+    private int elegirCartaJugador(Jugador jugador) {
         if (!jugador.tieneCartas()) {
             throw new IllegalStateException(construirMensajeSinCartas(jugador.getNombre()));
         }
@@ -278,7 +278,7 @@ public class Controlador {
     }
 
     private void jugarTurno(int indiceCarta) {
-        Participante jugador = partida.jugadorActual();
+        Jugador jugador = partida.jugadorActual();
         Carta jugada = jugador.jugarCarta(indiceCarta);
         vista.mostrarJugadaJugador(jugador.getNombre(), jugada);
 
@@ -293,7 +293,7 @@ public class Controlador {
         partida.siguienteTurno();
     }
 
-    private void procesarCaptura(Participante jugador, Carta jugada, List<List<Carta>> combinaciones) {
+    private void procesarCaptura(Jugador jugador, Carta jugada, List<List<Carta>> combinaciones) {
         List<Carta> mejorCombinacion = partida.seleccionarMejorCombinacion(combinaciones);
         partida.getMesa().retirarCartas(mejorCombinacion);
         mejorCombinacion.add(jugada);

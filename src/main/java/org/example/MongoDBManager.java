@@ -8,6 +8,9 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.ReplaceOptions;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.bson.Document;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import java.util.concurrent.TimeUnit;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,24 +33,30 @@ public class MongoDBManager {
             throw new ExcepcionPersistenciaHistorial("MONGO_DATABASE no está configurada");
         }
 
-        SerializadorPartida s = new SerializadorPartida();
-        this.serializador = s;
+        this.serializador = new SerializadorPartida();
 
         MongoClient client = null;
         MongoCollection<Document> coll = null;
 
         try {
-            client = MongoClients.create(uri);
+            // Construimos settings con timeouts cortos para no bloquear demasiado en caso de red inaccesible
+            ConnectionString cs = new ConnectionString(uri);
+            MongoClientSettings settings = MongoClientSettings.builder()
+                    .applyConnectionString(cs)
+                    .applyToClusterSettings(builder -> builder.serverSelectionTimeout(10, TimeUnit.SECONDS))
+                    .applyToSocketSettings(builder -> builder.connectTimeout(10, TimeUnit.SECONDS))
+                    .build();
+
+            client = MongoClients.create(settings);
             MongoDatabase db = client.getDatabase(dbName);
             coll = db.getCollection("partidas_guardadas");
 
-            // Intentamos un ping rápido para confirmar que el servidor responde
+            // Intentamos un ping (fallará rápido si no hay conexión)
             try {
                 db.runCommand(new Document("ping", 1));
             } catch (Exception pingEx) {
-                // Si el ping falla, consideramos la conexión no disponible
                 System.err.println("[MongoDBManager] Ping a MongoDB falló: " + pingEx.getMessage());
-                client.close();
+                try { client.close(); } catch (Exception ignore) {}
                 client = null;
                 coll = null;
             }

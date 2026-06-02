@@ -26,7 +26,7 @@ public interface VistaJuego {
     void mostrarAviso(String mensaje);
     void mostrarFinPartida();
     void mostrarResultadoRonda(ResultadoRonda resultado);
-    void mostrarSoloPuntosTotales(List<Participante> jugadores);
+    void mostrarSoloPuntosTotales(List<Jugador> jugadores);
     void mostrarPartidaGuardada();
     void mostrarAdios();
     void cerrar();
